@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
 import { BentoFormatView } from './components/BentoFormatView';
 import { getClassMeta } from './data/studyData';
 import {
@@ -136,7 +135,11 @@ export default function App() {
     if (transition) return;
     if (event.button !== 0 && event.pointerType === 'mouse') return;
     const target = event.target as HTMLElement | null;
-    if (target?.closest('input, select, textarea, button, a, label, [role="slider"]')) {
+    if (
+      target?.closest(
+        'input, select, textarea, button, a, label, [role="slider"], [data-no-swipe="true"]',
+      )
+    ) {
       return;
     }
 
@@ -341,45 +344,6 @@ export default function App() {
           </div>
         </>
       )}
-
-      {/* VisionOS-style Bottom Floating Frosted Glass Screen Bar */}
-      <nav
-        aria-label="Écrans"
-        className="sg-glass-bar fixed bottom-[10px] left-1/2 z-30 flex max-w-[calc(100vw-20px)] -translate-x-1/2 items-center gap-1 overflow-x-auto rounded-full p-1"
-      >
-        {FORMAT_META.map((meta) => {
-          const isActive = state.activeFormat === meta.index;
-          return (
-            <button
-              key={meta.id}
-              type="button"
-              aria-label={`Écran ${meta.index + 1} : ${meta.bottomLabel}`}
-              aria-current={isActive ? 'page' : undefined}
-              onClick={() => navigateToFormat(meta.index)}
-              className={`${meta.themeClass} sg-focus-ring h-[30px] rounded-full px-3 text-[11.5px] font-semibold whitespace-nowrap shrink-0 transition-[transform,box-shadow] duration-150 ${
-                isActive
-                  ? 'sg-btn-primary text-white'
-                  : 'text-[#36393F] hover:bg-white/60 hover:text-[#121417]'
-              }`}
-            >
-              <span className="md:hidden">{meta.sidebarLabel}</span>
-              <span className="hidden md:inline">{meta.bottomLabel}</span>
-            </button>
-          );
-        })}
-
-        <button
-          type="button"
-          onClick={() =>
-            triggerSlideTo(stepFormat(state.activeFormat, 1), 'right', 0)
-          }
-          aria-label="Écran suivant"
-          title="Écran suivant"
-          className="sg-focus-ring flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-white/75 text-[#121417] shadow-xs transition-colors hover:bg-white"
-        >
-          <Plus className="h-[14px] w-[14px]" strokeWidth={2.2} />
-        </button>
-      </nav>
     </main>
   );
 }

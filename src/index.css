@@ -74,7 +74,12 @@
   --accent-dark-rgb: 200, 30, 43;
 }
 
-/* Differentiation par cycle scolaire (Élémentaire · Collège · Lycée) */
+/* Differentiation par cycle scolaire (Préscolaire · Élémentaire · Collège · Lycée) */
+.cycle-prescolaire {
+  --cycle-rgb: 224, 194, 146;
+  --cycle-shadow-rgb: 196, 158, 102;
+}
+
 .cycle-elementaire {
   --cycle-rgb: 212, 178, 128;
   --cycle-shadow-rgb: 188, 148, 92;

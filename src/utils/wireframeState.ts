@@ -36,7 +36,7 @@ export const FORMAT_META: readonly FormatMeta[] = [
     id: 'revision',
     sidebarLabel: 'Révisions',
     bottomLabel: 'Révisions',
-    badge: 'RÉVISER',
+    badge: 'RÉVISIONS',
     title: 'Révise à ta façon',
     themeClass: 'theme-revision',
   },
