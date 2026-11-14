@@ -320,6 +320,29 @@
     0 0 22px rgba(var(--accent-rgb), 0.55);
 }
 
+.sg-focus-exit-pill {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 14px rgba(20, 24, 32, 0.09);
+}
+
+.sg-focus-exit-pill:hover {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: var(--accent-border);
+}
+
+:fullscreen,
+:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background-color: #dcd9d2;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

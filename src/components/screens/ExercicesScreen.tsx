@@ -1,16 +1,27 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { CheckCircle2, HelpCircle, Loader2, Sparkles } from 'lucide-react';
 import {
   ClassExperience,
   DifficultyLevel,
   ExerciseCategory,
 } from '../../data/studyData';
+import { requestExerciseCorrection } from '../../services/tutorClient';
 import { TileRect } from '../../utils/bentoLayout';
+import {
+  ExerciseCorrectionResult,
+  getSubjectTutor,
+  NoveltyAnalysisResult,
+} from '../../utils/tutorAgent';
 import { BentoTileCanvas, BuiltInTileSlot } from '../BentoTileCanvas';
 
 interface ExercicesScreenProps {
   experience: ClassExperience;
   initialSubject?: string;
   tiles: TileRect[];
+  baseHeightPx?: number;
+  locked?: boolean;
+  onSubjectChange?: (subject: string) => void;
+  onAnalyzeTile?: (tile: TileRect) => Promise<NoveltyAnalysisResult>;
   onChangeTiles: (next: TileRect[]) => void;
   onBringToFront: (tileId: string) => void;
   onGoToCours: () => void;
@@ -29,6 +40,10 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
   experience,
   initialSubject,
   tiles,
+  baseHeightPx,
+  locked = false,
+  onSubjectChange,
+  onAnalyzeTile,
   onChangeTiles,
   onBringToFront,
   onGoToCours,
@@ -44,6 +59,12 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
   const [validatedModules, setValidatedModules] = useState<Record<string, boolean>>({});
   const [finished, setFinished] = useState(false);
   const [showCompetenceHint, setShowCompetenceHint] = useState(true);
+  const [studentAnswer, setStudentAnswer] = useState('');
+  const [correctionState, setCorrectionState] = useState<{
+    loading: boolean;
+    error?: string;
+    result?: ExerciseCorrectionResult;
+  }>({ loading: false });
 
   useEffect(() => {
     setSubjectFilter(
@@ -53,6 +74,8 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
     setMasteredPoints({});
     setValidatedModules({});
     setFinished(false);
+    setStudentAnswer('');
+    setCorrectionState({ loading: false });
   }, [experience.classLevel, experience.serie, initialSubject, subjects]);
 
   const modules = useMemo(() => {
@@ -68,6 +91,13 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
   }, [exercises, selectedCategory, subjectFilter]);
 
   const activeModule = modules[moduleIndex % Math.max(1, modules.length)] ?? exercises[0];
+  const currentSubject = subjectFilter === 'Toutes' ? (activeModule?.subject ?? 'Toutes') : subjectFilter;
+  const tutor = useMemo(() => getSubjectTutor(currentSubject), [currentSubject]);
+
+  useEffect(() => {
+    onSubjectChange?.(currentSubject);
+  }, [currentSubject, onSubjectChange]);
+
   const totalCount = modules.length;
   const validatedCount = modules.filter((m) => validatedModules[m.id]).length;
   const progressPercent = totalCount > 0 ? Math.round((validatedCount / totalCount) * 100) : 0;
@@ -89,6 +119,7 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
     setMasteredPoints({});
     setValidatedModules({});
     setFinished(false);
+    setCorrectionState({ loading: false });
   };
 
   const toggleCheckpoint = (moduleId: string, idx: number) => {
@@ -108,10 +139,37 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
   };
 
   const handleNextModule = () => {
+    setCorrectionState({ loading: false });
     if (moduleIndex + 1 < totalCount) {
       setModuleIndex((i) => i + 1);
     } else {
       setFinished(true);
+    }
+  };
+
+  const handleRequestCorrection = async (requestType: 'hint' | 'correct') => {
+    if (!activeModule || correctionState.loading) return;
+    const moduleTutor = getSubjectTutor(activeModule.subject);
+    setCorrectionState({ loading: true });
+    try {
+      const result = await requestExerciseCorrection({
+        tutorName: moduleTutor.name,
+        subject: activeModule.subject,
+        classLevel: experience.classLevel,
+        serie: experience.serie,
+        lessonTitle: activeModule.lessonTitle,
+        competence: activeModule.competence,
+        checkpoints: activeModule.checkpoints,
+        difficulty,
+        studentAnswer: studentAnswer.trim(),
+        requestType,
+      });
+      setCorrectionState({ loading: false, result });
+    } catch (err) {
+      setCorrectionState({
+        loading: false,
+        error: err instanceof Error ? err.message : 'Correction indisponible.',
+      });
     }
   };
 
@@ -121,10 +179,10 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
       render: () => (
         <section
           aria-label="Choisir un entraînement"
-          className="sg-card-l1 flex h-full min-h-[240px] flex-col justify-between overflow-hidden rounded-[22px] p-4 md:min-h-0"
+          className="sg-card-l1 flex h-full min-h-[240px] w-full min-w-0 flex-col justify-between overflow-hidden rounded-[22px] p-3.5 @sm:p-4 md:min-h-0"
         >
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-[13.5px] font-bold text-[#121417]">Choisir un entraînement</h2>
               <span className="text-[11px] font-semibold text-[var(--accent)]">
                 {experience.classLevel}
@@ -132,7 +190,7 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
             </div>
 
             {/* Matière filter (scoped strictly to current class) */}
-            <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#4B4E54]">
+            <label className="flex min-w-0 flex-col gap-1 text-[11px] font-semibold text-[#4B4E54]">
               <span>Matière</span>
               <select
                 value={subjectFilter}
@@ -140,7 +198,7 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
                   setSubjectFilter(e.target.value);
                   resetSession();
                 }}
-                className="sg-focus-ring sg-glass-subtile h-[32px] rounded-[10px] px-2.5 text-[11.5px] font-medium text-[#121417]"
+                className="sg-focus-ring sg-glass-subtile h-[32px] w-full min-w-0 max-w-full rounded-[10px] px-2.5 text-[11.5px] font-medium text-[#121417]"
               >
                 <option value="Toutes">Toutes les matières</option>
                 {subjects.map((s) => (
@@ -231,7 +289,7 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
       render: () => (
         <section
           aria-label="Mon entraînement"
-          className="sg-card-l3 flex h-full min-h-[145px] flex-col justify-between overflow-hidden rounded-[22px] md:min-h-0"
+          className="sg-card-l3 flex h-full min-h-[145px] w-full min-w-0 flex-col justify-between gap-1 overflow-y-auto overflow-x-hidden rounded-[22px] md:min-h-0"
         >
           <div className="px-4 pt-3.5 pb-1.5">
             <h2 className="text-[13px] font-bold text-[#121417]">Mon entraînement</h2>
@@ -279,7 +337,7 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
       render: () => (
         <section
           aria-label="Progression de l’entraînement"
-          className="sg-card-l1 flex h-full min-h-[145px] flex-col justify-between overflow-hidden rounded-[22px] p-4 md:min-h-0"
+          className="sg-card-l1 flex h-full min-h-[145px] w-full min-w-0 flex-col justify-between gap-2 overflow-y-auto overflow-x-hidden rounded-[22px] p-3.5 @sm:p-4 md:min-h-0"
         >
           <div>
             <h2 className="text-[13px] font-bold text-[#121417]">Progression</h2>
@@ -320,7 +378,7 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
       render: () => (
         <section
           aria-label="EXERCICES & EXAMENS"
-          className="sg-card-l2 flex h-full min-h-[240px] flex-col justify-between overflow-hidden rounded-[22px] p-4 md:min-h-0 md:p-5"
+          className="sg-card-l2 flex h-full min-h-[240px] w-full min-w-0 flex-col justify-between overflow-hidden rounded-[22px] p-3.5 @md:p-5 md:min-h-0"
         >
           <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
             <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--accent)]">
@@ -379,9 +437,90 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
                     })}
                   </div>
 
-                  <p className="mt-2 text-[11px] italic text-[#55585F]">
-                    Les séries d’exercices et sujets détaillés de ce thème seront intégrés ici avec le cours associé.
-                  </p>
+                  <div className="mt-2.5 flex flex-col gap-2 border-t border-white/70 pt-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[11.5px] font-bold text-[#121417]">
+                        Aide &amp; correction avec {getSubjectTutor(activeModule.subject).name}
+                      </span>
+                      <span className="text-[10.5px] font-medium text-[#4B4E54]">
+                        {activeModule.subject}
+                      </span>
+                    </div>
+
+                    <textarea
+                      rows={2}
+                      value={studentAnswer}
+                      onChange={(e) => setStudentAnswer(e.target.value)}
+                      aria-label={`Réponse ou question pour ${getSubjectTutor(activeModule.subject).name}`}
+                      placeholder={`Écris ta réponse, ton calcul ou ta question pour ${getSubjectTutor(activeModule.subject).name}…`}
+                      className="sg-focus-ring w-full resize-none rounded-[12px] border border-white/80 bg-white/75 px-3 py-2 text-[12px] text-[#121417] placeholder:text-[#666A72]"
+                    />
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={correctionState.loading}
+                        onClick={() => void handleRequestCorrection('correct')}
+                        className="sg-focus-ring sg-btn-primary flex h-[28px] items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold text-white whitespace-nowrap"
+                      >
+                        {correctionState.loading ? (
+                          <Loader2 className="h-[12px] w-[12px] animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-[12px] w-[12px]" />
+                        )}
+                        <span>Corriger ma réponse</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={correctionState.loading}
+                        onClick={() => void handleRequestCorrection('hint')}
+                        className="sg-focus-ring sg-btn-secondary flex h-[28px] items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold text-[var(--accent)] whitespace-nowrap"
+                      >
+                        <HelpCircle className="h-[12px] w-[12px]" />
+                        <span>Indice de {getSubjectTutor(activeModule.subject).name}</span>
+                      </button>
+                    </div>
+
+                    {correctionState.error && (
+                      <p className="text-[11px] font-medium text-[#991B1B]">
+                        {correctionState.error}
+                      </p>
+                    )}
+
+                    {correctionState.result && (
+                      <div className="rounded-[14px] border border-[var(--accent-border)]/45 bg-white/80 p-3 text-[11.5px] leading-snug text-[#121417]">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="flex items-center gap-1 font-bold text-[var(--accent)]">
+                            <Sparkles className="h-[12px] w-[12px]" />
+                            Retour de {getSubjectTutor(activeModule.subject).name}
+                          </span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              correctionState.result.isCorrect
+                                ? 'bg-[#D9F3E4] text-[#096B3B]'
+                                : 'bg-[#FDEACC] text-[#924A03]'
+                            }`}
+                          >
+                            {correctionState.result.scoreLabel}
+                          </span>
+                        </div>
+                        <p className="mt-1">{correctionState.result.feedback}</p>
+                        {correctionState.result.steps.length > 0 && (
+                          <ul className="mt-1.5 space-y-0.5 text-[#36393F]">
+                            {correctionState.result.steps.map((step, i) => (
+                              <li key={i}>• {step}</li>
+                            ))}
+                          </ul>
+                        )}
+                        {correctionState.result.nextTip && (
+                          <p className="mt-1.5 font-medium text-[var(--accent)]">
+                            Conseil : {correctionState.result.nextTip}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -450,7 +589,7 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
       render: () => (
         <section
           aria-label="Navigation des entraînements"
-          className="sg-card-l1 flex h-full min-h-[155px] flex-col justify-between overflow-hidden rounded-[22px] p-4 md:min-h-0"
+          className="sg-card-l1 flex h-full min-h-[155px] w-full min-w-0 flex-col justify-between gap-2 overflow-y-auto overflow-x-hidden rounded-[22px] p-3.5 @sm:p-4 md:min-h-0"
         >
           <div>
             <h2 className="text-[13px] font-bold text-[#121417]">Série active</h2>
@@ -505,6 +644,10 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
     <BentoTileCanvas
       tiles={tiles}
       slots={slots}
+      baseHeightPx={baseHeightPx}
+      locked={locked}
+      tutorName={tutor.name}
+      onAnalyzeTile={onAnalyzeTile}
       onChangeTiles={onChangeTiles}
       onBringToFront={onBringToFront}
     />

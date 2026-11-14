@@ -81,17 +81,17 @@ export const SectionBottomStrip: React.FC<SectionBottomStripProps> = ({
   const Icon = config.icon;
 
   return (
-    <footer
+    <section
       aria-label="Synthèse de la section"
-      className="flex shrink-0 flex-col gap-2"
+      className="@container h-full w-full min-w-0"
     >
-      <div className="sg-card-l1 grid grid-cols-1 items-center gap-2.5 rounded-[22px] p-3 md:grid-cols-[1.05fr_1.35fr_auto] md:px-4 md:py-3">
-        <div className="sg-glass-subtile flex items-start gap-2.5 rounded-[16px] px-3 py-2.5">
+      <div className="sg-card-l1 grid h-full w-full min-w-0 grid-cols-1 content-start items-center gap-2.5 overflow-y-auto overflow-x-hidden rounded-[22px] p-3 @2xl:content-center @2xl:grid-cols-[1.05fr_1.35fr_auto] @2xl:px-4 @2xl:py-2.5">
+        <div className="sg-glass-subtile flex min-w-0 items-start gap-2.5 rounded-[16px] px-3 py-2.5">
           <div className="sg-nav-active mt-0.5 flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full text-white">
             <Icon className="h-[14px] w-[14px]" strokeWidth={2.2} />
           </div>
-          <div className="min-w-0">
-            <div className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-[var(--accent)]">
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[10.5px] font-bold uppercase tracking-[0.05em] text-[var(--accent)]">
               {config.leftEyebrow}
             </div>
             <div className="truncate text-[12.5px] font-bold text-[#121417]">
@@ -103,8 +103,8 @@ export const SectionBottomStrip: React.FC<SectionBottomStripProps> = ({
           </div>
         </div>
 
-        <div className="sg-glass-subtile rounded-[16px] px-3.5 py-2.5">
-          <div className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-[var(--accent)]">
+        <div className="sg-glass-subtile min-w-0 rounded-[16px] px-3.5 py-2.5">
+          <div className="truncate text-[10.5px] font-bold uppercase tracking-[0.05em] text-[var(--accent)]">
             {config.midEyebrow}
           </div>
           <div className="text-[12.5px] font-bold text-[#121417]">
@@ -115,26 +115,17 @@ export const SectionBottomStrip: React.FC<SectionBottomStripProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center justify-end md:pl-1">
+        <div className="flex min-w-0 items-center justify-end @2xl:pl-1">
           <button
             type="button"
             onClick={() => onNavigateTo(config.targetFormat)}
-            className="sg-focus-ring sg-btn-primary flex h-[36px] w-full items-center justify-center gap-1.5 rounded-full px-4 text-[12px] font-semibold text-white whitespace-nowrap transition-[transform,box-shadow] duration-150 md:w-auto"
+            className="sg-focus-ring sg-btn-primary flex h-[36px] w-full items-center justify-center gap-1.5 rounded-full px-4 text-[12px] font-semibold text-white whitespace-nowrap transition-[transform,box-shadow] duration-150 @2xl:w-auto"
           >
-            <span>{config.ctaLabel}</span>
+            <span className="truncate">{config.ctaLabel}</span>
             <ArrowRight className="h-[14px] w-[14px] shrink-0" strokeWidth={2.2} />
           </button>
         </div>
       </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-2 px-2 text-[11px] font-medium text-[#4B4E54]">
-        <span>
-          Programme scolaire du Sénégal · {classTag} ({experience.cycle})
-        </span>
-        <span>
-          Fais glisser vers la droite ou utilise la barre latérale pour changer d’espace
-        </span>
-      </div>
-    </footer>
+    </section>
   );
 };

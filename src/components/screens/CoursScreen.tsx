@@ -1,11 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { ClassExperience, LessonItem } from '../../data/studyData';
+import { requestLessonExplanation } from '../../services/tutorClient';
 import { TileRect } from '../../utils/bentoLayout';
+import { getSubjectTutor, NoveltyAnalysisResult } from '../../utils/tutorAgent';
 import { BentoTileCanvas, BuiltInTileSlot } from '../BentoTileCanvas';
 
 interface CoursScreenProps {
   experience: ClassExperience;
   tiles: TileRect[];
+  baseHeightPx?: number;
+  locked?: boolean;
+  onSubjectChange?: (subject: string) => void;
+  onAnalyzeTile?: (tile: TileRect) => Promise<NoveltyAnalysisResult>;
   onChangeTiles: (next: TileRect[]) => void;
   onBringToFront: (tileId: string) => void;
   onGoToExercices: (subject: string) => void;
@@ -14,6 +21,10 @@ interface CoursScreenProps {
 export const CoursScreen: React.FC<CoursScreenProps> = ({
   experience,
   tiles,
+  baseHeightPx,
+  locked = false,
+  onSubjectChange,
+  onAnalyzeTile,
   onChangeTiles,
   onBringToFront,
   onGoToExercices,
@@ -30,6 +41,18 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
     lessons[0] ? [lessons[0].id] : [],
   );
   const [autoAdvance, setAutoAdvance] = useState<boolean>(true);
+  const [lessonExplain, setLessonExplain] = useState<{
+    lessonId: string;
+    loading: boolean;
+    error?: string;
+    data?: { explanation: string; example: string; quickCheck: string };
+  } | null>(null);
+
+  const tutor = useMemo(() => getSubjectTutor(selectedSubject), [selectedSubject]);
+
+  useEffect(() => {
+    onSubjectChange?.(selectedSubject);
+  }, [selectedSubject, onSubjectChange]);
 
   useEffect(() => {
     setSelectedSubject(subjects[0] ?? 'Français');
@@ -38,6 +61,7 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
     setActiveStep(1);
     setOpenLessonId(null);
     setSelectedNotionIdx(null);
+    setLessonExplain(null);
     setConsultedIds(lessons[0] ? [lessons[0].id] : []);
   }, [experience.classLevel, experience.serie, subjects, lessons]);
 
@@ -96,13 +120,36 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
     setActiveStep(3);
   };
 
+  const handleExplainLesson = async (lesson: LessonItem) => {
+    const lessonTutor = getSubjectTutor(lesson.subject);
+    setLessonExplain({ lessonId: lesson.id, loading: true });
+    try {
+      const data = await requestLessonExplanation({
+        tutorName: lessonTutor.name,
+        subject: lesson.subject,
+        classLevel: experience.classLevel,
+        serie: experience.serie,
+        lessonTitle: lesson.title,
+        objectif: lesson.objectif,
+        notions: lesson.notions,
+      });
+      setLessonExplain({ lessonId: lesson.id, loading: false, data });
+    } catch (err) {
+      setLessonExplain({
+        lessonId: lesson.id,
+        loading: false,
+        error: err instanceof Error ? err.message : 'Explication indisponible.',
+      });
+    }
+  };
+
   const slots: BuiltInTileSlot[] = [
     {
       id: 'cours-main',
       render: () => (
         <section
           aria-label="COURS"
-          className="sg-card-l2 flex h-full min-h-[240px] flex-col justify-between overflow-hidden rounded-[22px] p-4 md:min-h-0 md:p-5"
+          className="sg-card-l2 flex h-full min-h-[240px] w-full min-w-0 flex-col justify-between overflow-hidden rounded-[22px] p-3.5 @md:p-5 md:min-h-0"
         >
           {/* Top bar: COURS context + 4 step pills */}
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -126,7 +173,7 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
               )}
             </div>
 
-            <div className="flex items-center gap-1.5" role="tablist" aria-label="Étapes du cours">
+            <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Étapes du cours">
               {[1, 2, 3, 4].map((step) => {
                 const isSelected = activeStep === step;
                 return (
@@ -182,7 +229,7 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Rechercher un thème ou une notion…"
                   aria-label="Rechercher une leçon"
-                  className="sg-focus-ring sg-glass-subtile h-[34px] min-w-[200px] flex-1 rounded-full px-4 text-[12.5px] text-[#121417] placeholder:text-[#666A72]"
+                  className="sg-focus-ring sg-glass-subtile h-[34px] min-w-0 w-full flex-1 rounded-full px-4 text-[12.5px] text-[#121417] placeholder:text-[#666A72] @xs:w-auto @xs:min-w-[140px]"
                 />
                 <button
                   type="submit"
@@ -196,10 +243,10 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
               <div
                 className={`grid grid-cols-1 gap-2 ${
                   displayedLessons.length === 1
-                    ? 'sm:grid-cols-1'
+                    ? '@sm:grid-cols-1'
                     : displayedLessons.length === 2
-                      ? 'sm:grid-cols-2'
-                      : 'sm:grid-cols-3'
+                      ? '@sm:grid-cols-2'
+                      : '@sm:grid-cols-2 @lg:grid-cols-3'
                 }`}
               >
                 {displayedLessons.map((lesson) => (
@@ -241,7 +288,7 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-2.5 @md:grid-cols-2">
                 <div className="sg-glass-subtile rounded-[16px] p-3.5">
                   <h2 className="text-[12px] font-bold text-[#121417]">Leçons &amp; notions au programme</h2>
                   <ul className="mt-1.5 space-y-1 text-[12px] leading-relaxed text-[#36393F]">
@@ -263,13 +310,54 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
                   </ul>
                 </div>
                 <div className="sg-glass-subtile rounded-[16px] p-3.5">
-                  <h2 className="text-[12px] font-bold text-[#121417]">Espace du cours détaillé</h2>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="text-[12px] font-bold text-[#121417]">Espace du cours détaillé</h2>
+                    <button
+                      type="button"
+                      disabled={lessonExplain?.loading}
+                      onClick={() => void handleExplainLesson(currentLesson)}
+                      className="sg-focus-ring sg-btn-secondary flex h-[24px] items-center gap-1 rounded-full px-2.5 text-[10.5px] font-semibold text-[var(--accent)] whitespace-nowrap"
+                    >
+                      {lessonExplain?.loading ? (
+                        <Loader2 className="h-[11px] w-[11px] animate-spin" />
+                      ) : (
+                        <Sparkles className="h-[11px] w-[11px]" />
+                      )}
+                      <span>Expliquer avec {getSubjectTutor(currentLesson.subject).name}</span>
+                    </button>
+                  </div>
                   <p className="mt-1.5 text-[12px] leading-relaxed text-[#36393F]">
                     {currentLesson.courseStatusNote}
                   </p>
                   <p className="mt-2 text-[11.5px] font-medium text-[var(--accent)]">
                     Repère : {currentLesson.summary}
                   </p>
+                  {lessonExplain && lessonExplain.lessonId === currentLesson.id && !lessonExplain.loading && (
+                    <div className="mt-2.5 rounded-[12px] border border-[var(--accent-border)]/40 bg-white/75 p-2.5 text-[11.5px] leading-snug text-[#121417]">
+                      {lessonExplain.error ? (
+                        <p className="font-medium text-[#991B1B]">{lessonExplain.error}</p>
+                      ) : (
+                        lessonExplain.data && (
+                          <div className="flex flex-col gap-1">
+                            <div className="font-bold text-[var(--accent)]">
+                              Explication de {getSubjectTutor(currentLesson.subject).name}
+                            </div>
+                            <p>{lessonExplain.data.explanation}</p>
+                            {lessonExplain.data.example && (
+                              <p className="text-[#36393F]">
+                                <span className="font-semibold">Exemple :</span> {lessonExplain.data.example}
+                              </p>
+                            )}
+                            {lessonExplain.data.quickCheck && (
+                              <p className="font-medium text-[var(--accent)]">
+                                Mini défi : {lessonExplain.data.quickCheck}
+                              </p>
+                            )}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -329,7 +417,7 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
       render: () => (
         <section
           aria-label="Choisir une matière"
-          className="sg-card-l1 flex h-full min-h-[220px] flex-col justify-between overflow-hidden rounded-[22px] p-3.5 md:min-h-0 md:p-4"
+          className="sg-card-l1 flex h-full min-h-[220px] w-full min-w-0 flex-col justify-between overflow-hidden rounded-[22px] p-3.5 @md:p-4 md:min-h-0"
         >
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-[13px] font-bold text-[#121417]">Choisir une matière</h2>
@@ -404,7 +492,7 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
       render: () => (
         <section
           aria-label="Progression du cours"
-          className="sg-card-l1 flex h-full min-h-[145px] flex-col justify-between overflow-hidden rounded-[22px] p-4 md:min-h-0"
+          className="sg-card-l1 flex h-full min-h-[145px] w-full min-w-0 flex-col justify-between gap-2 overflow-y-auto overflow-x-hidden rounded-[22px] p-3.5 @sm:p-4 md:min-h-0"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -478,7 +566,7 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
       render: () => (
         <section
           aria-label="Leçon suivante"
-          className="sg-card-l3 flex h-full min-h-[145px] flex-col justify-between overflow-hidden rounded-[22px] md:min-h-0"
+          className="sg-card-l3 flex h-full min-h-[145px] w-full min-w-0 flex-col justify-between gap-1 overflow-y-auto overflow-x-hidden rounded-[22px] md:min-h-0"
         >
           <div className="p-4 pb-2">
             <h2 className="text-[13px] font-bold text-[#121417]">Leçon suivante</h2>
@@ -532,7 +620,7 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
       render: () => (
         <section
           aria-label={`Leçons de ${selectedSubject}`}
-          className="sg-card-l1 flex h-full min-h-[165px] flex-col justify-between overflow-hidden rounded-[22px] p-3.5 md:min-h-0 md:p-4"
+          className="sg-card-l1 flex h-full min-h-[165px] w-full min-w-0 flex-col justify-between overflow-hidden rounded-[22px] p-3.5 @md:p-4 md:min-h-0"
         >
           <div className="flex shrink-0 items-start justify-between gap-2">
             <div className="min-w-0">
@@ -600,6 +688,10 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
     <BentoTileCanvas
       tiles={tiles}
       slots={slots}
+      baseHeightPx={baseHeightPx}
+      locked={locked}
+      tutorName={tutor.name}
+      onAnalyzeTile={onAnalyzeTile}
       onChangeTiles={onChangeTiles}
       onBringToFront={onBringToFront}
     />

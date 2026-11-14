@@ -1,12 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { ClassExperience, SubjectStatus } from '../../data/studyData';
+import { requestExamPlan } from '../../services/tutorClient';
 import { TileRect } from '../../utils/bentoLayout';
+import { getSubjectTutor, NoveltyAnalysisResult } from '../../utils/tutorAgent';
 import { computeDaysRemaining, computePreparationPercent } from '../../utils/wireframeState';
 import { BentoTileCanvas, BuiltInTileSlot } from '../BentoTileCanvas';
 
 interface PreparationExamenScreenProps {
   experience: ClassExperience;
   tiles: TileRect[];
+  baseHeightPx?: number;
+  locked?: boolean;
+  onSubjectChange?: (subject: string) => void;
+  onAnalyzeTile?: (tile: TileRect) => Promise<NoveltyAnalysisResult>;
   onChangeTiles: (next: TileRect[]) => void;
   onBringToFront: (tileId: string) => void;
   onGoToExamSubjects: () => void;
@@ -17,6 +24,10 @@ const STATUS_CYCLE: SubjectStatus[] = ['À commencer', 'En cours', 'Révisée'];
 export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = ({
   experience,
   tiles,
+  baseHeightPx,
+  locked = false,
+  onSubjectChange,
+  onAnalyzeTile,
   onChangeTiles,
   onBringToFront,
   onGoToExamSubjects,
@@ -29,6 +40,22 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
     ...(subjects[1] ? { [subjects[1]]: 'En cours' } : {}),
   }));
   const [planGenerated, setPlanGenerated] = useState<boolean>(false);
+  const [aiExamPlan, setAiExamPlan] = useState<{
+    loading: boolean;
+    error?: string;
+    summary?: string;
+    steps?: { phase: string; title: string; type: string }[];
+  }>({ loading: false });
+
+  const prioritySubject =
+    subjects.find((s) => (subjectStatuses[s] ?? 'À commencer') !== 'Révisée') ??
+    subjects[0] ??
+    'Toutes';
+  const tutor = useMemo(() => getSubjectTutor(prioritySubject), [prioritySubject]);
+
+  useEffect(() => {
+    onSubjectChange?.(prioritySubject);
+  }, [prioritySubject, onSubjectChange]);
 
   useEffect(() => {
     setSubjectStatuses({
@@ -36,6 +63,7 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
       ...(subjects[1] ? { [subjects[1]]: 'En cours' } : {}),
     });
     setPlanGenerated(false);
+    setAiExamPlan({ loading: false });
   }, [classLevel, serie, subjects]);
 
   const statusList = useMemo(
@@ -61,7 +89,7 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
     });
   };
 
-  const planSteps = useMemo(() => {
+  const defaultPlanSteps = useMemo(() => {
     return [
       {
         phase: 'Semaine 1',
@@ -81,15 +109,48 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
     ];
   }, [subjects, examLabel, serie]);
 
+  const planSteps =
+    aiExamPlan.steps && aiExamPlan.steps.length > 0 ? aiExamPlan.steps : defaultPlanSteps;
+
+  const handleGenerateAiExamPlan = async () => {
+    if (aiExamPlan.loading) return;
+    setAiExamPlan({ loading: true });
+    try {
+      const res = await requestExamPlan({
+        tutorName: tutor.name,
+        subject: prioritySubject,
+        classLevel,
+        serie,
+        examLabel,
+        daysRemaining,
+        subjectsStatus: subjects.map((s) => ({
+          subject: s,
+          status: subjectStatuses[s] ?? 'À commencer',
+        })),
+      });
+      setPlanGenerated(true);
+      setAiExamPlan({
+        loading: false,
+        summary: res.summary,
+        steps: res.steps,
+      });
+    } catch (err) {
+      setAiExamPlan({
+        loading: false,
+        error: err instanceof Error ? err.message : 'Plan personnalisé indisponible.',
+      });
+    }
+  };
+
   const slots: BuiltInTileSlot[] = [
     {
       id: 'exam-target',
       render: () => (
         <section
           aria-label="Examen préparé"
-          className="sg-card-l1 flex h-full min-h-[130px] flex-col justify-between gap-1.5 overflow-hidden rounded-[22px] p-3.5 md:min-h-0"
+          className="sg-card-l1 flex h-full min-h-[130px] w-full min-w-0 flex-col justify-between gap-1.5 overflow-y-auto overflow-x-hidden rounded-[22px] p-3.5 md:min-h-0"
         >
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-[11.5px] font-semibold text-[#4B4E54]">Examen préparé</span>
             <span className="text-[12px] font-bold text-[var(--accent)]">
               {classLevel}
@@ -112,7 +173,7 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
       render: () => (
         <section
           aria-label="Date de l’examen"
-          className="sg-card-l3 flex h-full min-h-[130px] flex-col justify-between overflow-hidden rounded-[22px] md:min-h-0"
+          className="sg-card-l3 flex h-full min-h-[130px] w-full min-w-0 flex-col justify-between gap-1 overflow-y-auto overflow-x-hidden rounded-[22px] md:min-h-0"
         >
           <div className="px-3.5 pt-3 pb-1.5">
             <span className="text-[11.5px] font-semibold text-[#4B4E54]">Date de l’examen</span>
@@ -133,7 +194,7 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
               value={examDate}
               onChange={(e) => setExamDate(e.target.value)}
               aria-label="Date de l’examen"
-              className="sg-focus-ring h-[30px] w-full rounded-full border border-white/80 bg-white/80 px-3 text-[11.5px] font-medium text-[#121417]"
+              className="sg-focus-ring h-[30px] w-full min-w-0 rounded-full border border-white/80 bg-white/80 px-3 text-[11.5px] font-medium text-[#121417]"
             />
             {!examDate && (
               <p className="text-[10.5px] leading-tight text-[#4B4E54]">
@@ -149,9 +210,9 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
       render: () => (
         <section
           aria-label="Jours restants"
-          className="sg-card-l1 flex h-full min-h-[130px] flex-col justify-between gap-1.5 overflow-hidden rounded-[22px] p-3.5 md:min-h-0"
+          className="sg-card-l1 flex h-full min-h-[130px] w-full min-w-0 flex-col justify-between gap-1.5 overflow-y-auto overflow-x-hidden rounded-[22px] p-3.5 md:min-h-0"
         >
-          <div className="flex items-baseline justify-between gap-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
             <span className="text-[11.5px] font-semibold text-[#4B4E54]">Jours restants</span>
             <span className="font-mono text-[15.5px] font-bold text-[var(--accent)] tabular-nums">
               {daysRemaining !== null ? `${daysRemaining} jours` : 'À renseigner'}
@@ -165,9 +226,9 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
             </p>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] font-semibold text-[#4B4E54] tabular-nums">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold text-[#4B4E54] tabular-nums">
             <span>Préparation : {prepPercent} %</span>
-            <div className="h-[4px] w-[52%] overflow-hidden rounded-full bg-white/65">
+            <div className="h-[4px] min-w-[72px] flex-1 max-w-[52%] overflow-hidden rounded-full bg-white/65">
               <div
                 className="sg-accent-bar h-full rounded-full transition-[width] duration-200"
                 style={{ width: `${prepPercent}%` }}
@@ -182,7 +243,7 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
       render: () => (
         <section
           aria-label="PRÉPARATION EXAMEN"
-          className="sg-card-l2 flex h-full min-h-[220px] flex-col justify-between overflow-hidden rounded-[22px] p-4 md:min-h-0 md:p-5"
+          className="sg-card-l2 flex h-full min-h-[220px] w-full min-w-0 flex-col justify-between overflow-hidden rounded-[22px] p-3.5 @md:p-5 md:min-h-0"
         >
           <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
             <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--accent)]">
@@ -208,10 +269,18 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
 
             <div>
               <h2 className="text-[12.5px] font-bold text-[#121417]">Mon plan de préparation</h2>
+              {aiExamPlan.summary && (
+                <p className="mt-1 text-[11.5px] font-medium text-[var(--accent)]">
+                  {tutor.name} : {aiExamPlan.summary}
+                </p>
+              )}
+              {aiExamPlan.error && (
+                <p className="mt-1 text-[11px] font-medium text-[#991B1B]">{aiExamPlan.error}</p>
+              )}
               <div className="mt-2 flex flex-col gap-2">
                 {planSteps.map((step) => (
                   <div
-                    key={step.phase}
+                    key={`${step.phase}-${step.title}`}
                     className="sg-glass-subtile flex flex-wrap items-center justify-between gap-2 rounded-[14px] px-3.5 py-2.5"
                   >
                     <div className="flex items-center gap-2.5">
@@ -243,8 +312,21 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
                 </button>
                 <button
                   type="button"
+                  disabled={aiExamPlan.loading}
+                  onClick={() => void handleGenerateAiExamPlan()}
+                  className="sg-focus-ring sg-btn-secondary flex h-[30px] items-center gap-1.5 rounded-full px-3.5 text-[12px] font-semibold text-[var(--accent)] whitespace-nowrap"
+                >
+                  {aiExamPlan.loading ? (
+                    <Loader2 className="h-[12px] w-[12px] animate-spin" />
+                  ) : (
+                    <Sparkles className="h-[12px] w-[12px]" />
+                  )}
+                  <span>Plan adapté par {tutor.name}</span>
+                </button>
+                <button
+                  type="button"
                   onClick={onGoToExamSubjects}
-                  className="sg-focus-ring sg-btn-secondary h-[30px] rounded-full px-3.5 text-[12px] font-semibold text-[var(--accent)] whitespace-nowrap"
+                  className="sg-focus-ring sg-nav-idle h-[30px] rounded-full px-3.5 text-[12px] font-semibold text-[#1C1E22] whitespace-nowrap"
                 >
                   Voir les sujets d’examen
                 </button>
@@ -277,7 +359,7 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
       render: () => (
         <section
           aria-label="Matières à réviser"
-          className="sg-card-l1 flex h-full min-h-[220px] flex-col justify-between overflow-hidden rounded-[22px] p-4 md:min-h-0"
+          className="sg-card-l1 flex h-full min-h-[220px] w-full min-w-0 flex-col justify-between overflow-hidden rounded-[22px] p-3.5 @sm:p-4 md:min-h-0"
         >
           <div>
             <h2 className="text-[13px] font-bold text-[#121417]">Matières à réviser</h2>
@@ -352,6 +434,10 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
     <BentoTileCanvas
       tiles={tiles}
       slots={slots}
+      baseHeightPx={baseHeightPx}
+      locked={locked}
+      tutorName={tutor.name}
+      onAnalyzeTile={onAnalyzeTile}
       onChangeTiles={onChangeTiles}
       onBringToFront={onBringToFront}
     />
