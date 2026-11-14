@@ -1,0 +1,6 @@
+{
+  "name": "Monochrome Bento Wireframe",
+  "description": "High-contrast monochrome bento dashboard wireframe interface.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
