@@ -27,9 +27,13 @@ interface TutorAssistantDrawerProps {
   screenLabel: string;
   classLevel: ClassLevel;
   serie: SerieOption | null;
+  activeSubject: string;
   subjects: string[];
   novelties: SiteNoveltyItem[];
   isFocusMode: boolean;
+  isCourseReaderOpen: boolean;
+  activeCourseTitle?: string;
+  activeCourseContent?: string;
   onExecuteActions: (actions: SiteControlAction[]) => void;
 }
 
@@ -41,9 +45,13 @@ export const TutorAssistantDrawer: React.FC<TutorAssistantDrawerProps> = ({
   screenLabel,
   classLevel,
   serie,
+  activeSubject,
   subjects,
   novelties,
   isFocusMode,
+  isCourseReaderOpen,
+  activeCourseTitle,
+  activeCourseContent,
   onExecuteActions,
 }) => {
   const [messages, setMessages] = useState<TutorChatMessage[]>([
@@ -51,7 +59,7 @@ export const TutorAssistantDrawer: React.FC<TutorAssistantDrawerProps> = ({
       id: 'welcome',
       role: 'tutor',
       tutorName: tutor.name,
-      text: `Bonjour ! Je suis ${tutor.name}. Je t’accompagne en ${tutor.subject} (${classLevel}${serie ? ` · ${serie}` : ''}) : je peux générer des quiz ou flashcards, corriger tes exercices, analyser tes nouveaux carreaux et naviguer sur tout le site.`,
+      text: `Bonjour ! Je suis ${tutor.name}. Je t’accompagne en ${tutor.subject} (${classLevel}${serie ? ` · ${serie}` : ''}) : je peux ouvrir tes cours complets, générer des quiz ou flashcards, créer et corriger des exercices, analyser tes nouveautés et piloter tout le site.`,
     },
   ]);
   const [input, setInput] = useState('');
@@ -118,9 +126,13 @@ export const TutorAssistantDrawer: React.FC<TutorAssistantDrawerProps> = ({
           screenLabel,
           classLevel,
           serie,
+          activeSubject,
           subjects,
           novelties,
           isFocusMode,
+          isCourseReaderOpen,
+          activeCourseTitle,
+          activeCourseContent,
         },
       });
 
@@ -173,7 +185,12 @@ export const TutorAssistantDrawer: React.FC<TutorAssistantDrawerProps> = ({
         classLevel,
         serie,
         screenLabel,
-        items: novelties.map((n) => ({ id: n.id, title: n.title, note: n.note })),
+        items: novelties.map((n) => ({
+          id: n.id,
+          title: n.title,
+          note: n.note,
+          kind: n.kind,
+        })),
       });
 
       const formatted = [
@@ -205,8 +222,8 @@ export const TutorAssistantDrawer: React.FC<TutorAssistantDrawerProps> = ({
   };
 
   const quickPrompts = [
-    'Passe aux révisions et prépare un quiz',
-    'Ajoute un carreau résumé de cette leçon',
+    'Ouvre le cours complet en pleine page',
+    'Prépare un quiz sur ce cours',
     'Donne-moi un exercice corrigé sur ce chapitre',
   ];
 

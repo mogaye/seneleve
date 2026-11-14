@@ -9,9 +9,17 @@ import { BentoTileCanvas, BuiltInTileSlot } from '../BentoTileCanvas';
 
 interface PreparationExamenScreenProps {
   experience: ClassExperience;
+  examDate?: string;
+  onExamDateChange?: (date: string) => void;
+  subjectStatuses?: Record<string, SubjectStatus>;
+  onSubjectStatusesChange?: React.Dispatch<React.SetStateAction<Record<string, SubjectStatus>>>;
   tiles: TileRect[];
   baseHeightPx?: number;
   locked?: boolean;
+  openTileId?: string | null;
+  onSelectOpenTileId?: (tileId: string | null) => void;
+  onOpenTilePage?: (tile: TileRect) => void;
+  onOpenTutor?: () => void;
   onSubjectChange?: (subject: string) => void;
   onAnalyzeTile?: (tile: TileRect) => Promise<NoveltyAnalysisResult>;
   onChangeTiles: (next: TileRect[]) => void;
@@ -23,9 +31,17 @@ const STATUS_CYCLE: SubjectStatus[] = ['À commencer', 'En cours', 'Révisée'];
 
 export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = ({
   experience,
+  examDate: controlledExamDate,
+  onExamDateChange,
+  subjectStatuses: controlledStatuses,
+  onSubjectStatusesChange,
   tiles,
   baseHeightPx,
   locked = false,
+  openTileId = null,
+  onSelectOpenTileId,
+  onOpenTilePage,
+  onOpenTutor,
   onSubjectChange,
   onAnalyzeTile,
   onChangeTiles,
@@ -34,11 +50,25 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
 }) => {
   const { subjects, examLabel, classLevel, serie } = experience;
 
-  const [examDate, setExamDate] = useState<string>('');
-  const [subjectStatuses, setSubjectStatuses] = useState<Record<string, SubjectStatus>>(() => ({
+  const [localExamDate, setLocalExamDate] = useState<string>('');
+  const [localSubjectStatuses, setLocalSubjectStatuses] = useState<
+    Record<string, SubjectStatus>
+  >(() => ({
     ...(subjects[0] ? { [subjects[0]]: 'Révisée' } : {}),
     ...(subjects[1] ? { [subjects[1]]: 'En cours' } : {}),
   }));
+  const examDate = controlledExamDate !== undefined ? controlledExamDate : localExamDate;
+  const setExamDate = (val: string) => {
+    if (onExamDateChange) {
+      onExamDateChange(val);
+    } else {
+      setLocalExamDate(val);
+    }
+  };
+  const subjectStatuses =
+    controlledStatuses !== undefined ? controlledStatuses : localSubjectStatuses;
+  const setSubjectStatuses = onSubjectStatusesChange ?? setLocalSubjectStatuses;
+
   const [planGenerated, setPlanGenerated] = useState<boolean>(false);
   const [aiExamPlan, setAiExamPlan] = useState<{
     loading: boolean;
@@ -58,13 +88,15 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
   }, [prioritySubject, onSubjectChange]);
 
   useEffect(() => {
-    setSubjectStatuses({
-      ...(subjects[0] ? { [subjects[0]]: 'Révisée' } : {}),
-      ...(subjects[1] ? { [subjects[1]]: 'En cours' } : {}),
-    });
+    if (!controlledStatuses) {
+      setLocalSubjectStatuses({
+        ...(subjects[0] ? { [subjects[0]]: 'Révisée' } : {}),
+        ...(subjects[1] ? { [subjects[1]]: 'En cours' } : {}),
+      });
+    }
     setPlanGenerated(false);
     setAiExamPlan({ loading: false });
-  }, [classLevel, serie, subjects]);
+  }, [classLevel, serie, subjects, controlledStatuses]);
 
   const statusList = useMemo(
     () => subjects.map((subj) => subjectStatuses[subj] ?? 'À commencer'),
@@ -437,6 +469,14 @@ export const PreparationExamenScreen: React.FC<PreparationExamenScreenProps> = (
       baseHeightPx={baseHeightPx}
       locked={locked}
       tutorName={tutor.name}
+      tutor={tutor}
+      formatIndex={3}
+      experience={experience}
+      availableSubjects={subjects}
+      openTileId={openTileId}
+      onSelectOpenTileId={onSelectOpenTileId}
+      onOpenTilePage={onOpenTilePage}
+      onOpenTutor={onOpenTutor}
       onAnalyzeTile={onAnalyzeTile}
       onChangeTiles={onChangeTiles}
       onBringToFront={onBringToFront}

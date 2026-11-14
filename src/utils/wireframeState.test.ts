@@ -17,9 +17,11 @@ import {
   BAC_SERIES,
   CLASS_LEVELS_FULL,
   getClassExperience,
+  getDefaultSerieForClass,
   getSeriesForClass,
   SECONDE_SERIES,
 } from '../data/studyData';
+import { getPdfCourseDocument } from '../data/pdfCourses';
 
 test('initial state starts at CI and 4 screen metadata match specification', () => {
   const state = createInitialDashboardState();
@@ -61,6 +63,8 @@ test('class progression spans Petite Section to Terminale and adapts series clea
   assert.deepEqual(getSeriesForClass('2nde'), SECONDE_SERIES);
   assert.equal(getSeriesForClass('1re').length, BAC_SERIES.length);
   assert.equal(getSeriesForClass('Terminale').length, BAC_SERIES.length);
+  assert.equal(getDefaultSerieForClass('2nde'), 'Tronc commun');
+  assert.equal(getDefaultSerieForClass('Terminale'), 'S2');
 
   const secondeState = setActiveClass(createInitialDashboardState(), '2nde');
   assert.equal(secondeState.selectedClass, '2nde');
@@ -112,6 +116,83 @@ test('class experience adapts subjects by class/serie, uses structured notions, 
       }
     }
   }
+});
+
+test('lycee courses and lessons strictly isolate each series without cross-series mixing', () => {
+  const getDoc = (classLevel: '2nde' | '1re' | 'Terminale', serie: string, subject: string) => {
+    const exp = getClassExperience(classLevel, serie as never);
+    const lesson = exp.lessons.find((l) => l.subject === subject);
+    return getPdfCourseDocument({
+      classLevel,
+      serie: serie as never,
+      subject,
+      fallbackTitle: lesson?.title ?? subject,
+      fallbackObjectif: lesson?.objectif ?? subject,
+      fallbackNotions: lesson?.notions ?? [],
+    });
+  };
+
+  // Terminale S2 vs S1 vs L2 isolation
+  const s2Svt = getDoc('Terminale', 'S2', 'SVT');
+  assert.ok(s2Svt.title.includes('Terminale S2'));
+  assert.ok(s2Svt.title.includes('30 leçons'));
+  assert.equal(/\b(L2|S1|S3|S4|STEG)\b/.test(JSON.stringify(s2Svt)), false);
+
+  for (const subj of ['Sciences physiques', 'Mathématiques', 'Français', 'Philosophie']) {
+    const doc = getDoc('Terminale', 'S2', subj);
+    assert.equal(
+      /\b(L2|S1|S3|S4|STEG)\b/.test(JSON.stringify(doc)),
+      false,
+      `Terminale S2 ${subj} leaked another series`,
+    );
+  }
+
+  const s1Svt = getDoc('Terminale', 'S1', 'SVT');
+  assert.ok(s1Svt.title.includes('19 leçons'));
+  assert.equal(/\b(L2|S2)\b/.test(JSON.stringify(s1Svt)), false);
+
+  const l2Svt = getDoc('Terminale', 'L2', 'SVT');
+  assert.ok(l2Svt.title.includes('11 leçons'));
+  assert.equal(/\b(S1|S2)\b/.test(JSON.stringify(l2Svt)), false);
+
+  // Exercise IDs differ strictly across series
+  const s2ExIds = new Set(getClassExperience('Terminale', 'S2').exercises.map((e) => e.id));
+  const l2ExIds = getClassExperience('Terminale', 'L2').exercises.map((e) => e.id);
+  for (const id of l2ExIds) {
+    assert.equal(s2ExIds.has(id), false, `Exercise ID ${id} collided between S2 and L2`);
+  }
+
+  // 1re series isolation
+  const pS2Svt = getDoc('1re', 'S2', 'SVT');
+  assert.equal(/\b(L2|S1|STEG)\b/.test(JSON.stringify(pS2Svt)), false);
+  const pL2Svt = getDoc('1re', 'L2', 'SVT');
+  assert.equal(/\b(S1|S2|STEG)\b/.test(JSON.stringify(pL2Svt)), false);
+  const pS1Maths = getDoc('1re', 'S1', 'Mathématiques');
+  assert.equal(/\b(L2|S2|STEG)\b/.test(JSON.stringify(pS1Maths)), false);
+  const pStegEco = getDoc('1re', 'STEG', 'Économie');
+  assert.equal(/\b(S1|S2|L2)\b/.test(JSON.stringify(pStegEco)), false);
+
+  // 2nde series isolation
+  const secSMaths = getDoc('2nde', 'Orientation S', 'Mathématiques');
+  assert.ok(secSMaths.title.includes('15 chapitres'));
+  assert.equal(/\bde L\b/.test(JSON.stringify(secSMaths)), false);
+
+  const secLMaths = getDoc('2nde', 'Orientation L', 'Mathématiques');
+  assert.ok(secLMaths.title.includes('8 chapitres'));
+
+  const secStegMaths = getDoc('2nde', 'Orientation STEG', 'Mathématiques');
+  assert.ok(secStegMaths.title.includes('7 chapitres'));
+
+  const secSPhys = getDoc('2nde', 'Orientation S', 'Sciences physiques');
+  assert.ok(secSPhys.title.includes('25 leçons'));
+  const secLPhys = getDoc('2nde', 'Orientation L', 'Sciences physiques');
+  assert.ok(secLPhys.title.includes('10 leçons'));
+
+  const secSSvt = getDoc('2nde', 'Orientation S', 'SVT');
+  assert.ok(secSSvt.title.includes('10 leçons'));
+  assert.equal(/\bde L\b/.test(JSON.stringify(secSSvt)), false);
+  const secLSvt = getDoc('2nde', 'Orientation L', 'SVT');
+  assert.ok(secLSvt.title.includes('8 leçons'));
 });
 
 test('setFormat, resolveSwipeDirection, computePreparationPercent, computeDaysRemaining, toggleUtilityNav work cleanly', () => {

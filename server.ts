@@ -110,10 +110,15 @@ async function createApp() {
       lessonTitle = 'Leçon du programme',
       objectif = '',
       notions = [],
+      courseContent = '',
       count = 4,
     } = req.body ?? {};
 
     const safeCount = Math.max(2, Math.min(6, Number(count) || 4));
+    const trimmedContent =
+      typeof courseContent === 'string' && courseContent.trim()
+        ? courseContent.trim().slice(0, 6000)
+        : '';
 
     try {
       const response = await callWithRetry(() =>
@@ -127,6 +132,9 @@ async function createApp() {
             objectif ? `Objectif : ${objectif}` : '',
             Array.isArray(notions) && notions.length > 0
               ? `Notions : ${notions.join(' ; ')}`
+              : '',
+            trimmedContent
+              ? `Contenu complet du cours de référence :\n"""\n${trimmedContent}\n"""`
               : '',
             `Chaque question doit avoir 4 choix distincts, un seul correctIndex (0 à 3) et une explication courte et encourageante signée ${tutorName}.`,
           ]
@@ -183,10 +191,15 @@ async function createApp() {
       lessonTitle = 'Leçon du programme',
       objectif = '',
       notions = [],
+      courseContent = '',
       count = 5,
     } = req.body ?? {};
 
     const safeCount = Math.max(3, Math.min(8, Number(count) || 5));
+    const trimmedContent =
+      typeof courseContent === 'string' && courseContent.trim()
+        ? courseContent.trim().slice(0, 6000)
+        : '';
 
     try {
       const response = await callWithRetry(() =>
@@ -200,6 +213,9 @@ async function createApp() {
             objectif ? `Objectif : ${objectif}` : '',
             Array.isArray(notions) && notions.length > 0
               ? `Notions : ${notions.join(' ; ')}`
+              : '',
+            trimmedContent
+              ? `Contenu complet du cours de référence :\n"""\n${trimmedContent}\n"""`
               : '',
             `Chaque carte contient : question (recto clair), answer (verso précis et court), et tip (astuce mémo de ${tutorName}).`,
           ]
@@ -236,6 +252,88 @@ async function createApp() {
     }
   });
 
+  app.post('/api/tutor/generate-exercise', async (req, res) => {
+    const ai = getAiClient();
+    if (!ai) {
+      return res.status(503).json({
+        error: 'L’accompagnement pédagogique n’est pas encore activé côté serveur.',
+      });
+    }
+
+    const {
+      tutorName = 'Maya',
+      subject = 'Français',
+      classLevel = 'CI',
+      serie = null,
+      lessonTitle = '',
+      competence = '',
+      category = 'Exercices par leçon',
+      difficulty = 'Entraînement',
+      courseContent = '',
+    } = req.body ?? {};
+
+    const trimmedContent =
+      typeof courseContent === 'string' && courseContent.trim()
+        ? courseContent.trim().slice(0, 6000)
+        : '';
+
+    try {
+      const response = await callWithRetry(() =>
+        ai.models.generateContent({
+          model: MODEL_NAME,
+          contents: [
+            `Conçois un exercice d'application complet et progressif adapté au niveau de l'élève :`,
+            `Matière : ${subject}`,
+            `Classe : ${classLevel}${serie ? ` (${serie})` : ''}`,
+            `Format : ${category} | Niveau : ${difficulty}`,
+            lessonTitle ? `Thème / Leçon : ${lessonTitle}` : '',
+            competence ? `Compétence travaillée : ${competence}` : '',
+            trimmedContent
+              ? `Contenu du cours à respecter :\n"""\n${trimmedContent}\n"""`
+              : '',
+            `Fournis : title (titre court de l'exercice), prompt (énoncé clair avec consignes et données précises), hints (2 à 3 indices graduels), solution (corrigé rédigé étape par étape), keyTakeaway (règle ou méthode à retenir).`,
+          ]
+            .filter(Boolean)
+            .join('\n'),
+          config: {
+            systemInstruction: buildPersonaInstruction({
+              tutorName,
+              subject,
+              classLevel,
+              serie,
+            }),
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+                prompt: { type: Type.STRING },
+                hints: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                },
+                solution: { type: Type.STRING },
+                keyTakeaway: { type: Type.STRING },
+              },
+              required: ['title', 'prompt', 'hints', 'solution', 'keyTakeaway'],
+            },
+          },
+        }),
+      );
+
+      const data = parseJsonSafe(response.text, {
+        title: `Exercice d’application — ${subject}`,
+        prompt: 'Résous l’exercice en détaillant chaque étape de ton raisonnement.',
+        hints: [],
+        solution: '',
+        keyTakeaway: '',
+      });
+      return res.json(data);
+    } catch (err) {
+      return handleApiError(res, err);
+    }
+  });
+
   app.post('/api/tutor/correct-exercise', async (req, res) => {
     const ai = getAiClient();
     if (!ai) {
@@ -253,6 +351,7 @@ async function createApp() {
       competence = '',
       checkpoints = [],
       difficulty = 'Entraînement',
+      exercisePrompt = '',
       studentAnswer = '',
       requestType = 'correct',
     } = req.body ?? {};
@@ -270,6 +369,7 @@ async function createApp() {
             `Thème : ${lessonTitle}`,
             `Compétence : ${competence}`,
             `Niveau : ${difficulty}`,
+            exercisePrompt ? `Énoncé de l'exercice : ${exercisePrompt}` : '',
             Array.isArray(checkpoints) && checkpoints.length > 0
               ? `Points travaillés : ${checkpoints.join(' ; ')}`
               : '',
@@ -332,20 +432,29 @@ async function createApp() {
       lessonTitle = '',
       objectif = '',
       notions = [],
+      courseContent = '',
     } = req.body ?? {};
+
+    const trimmedContent =
+      typeof courseContent === 'string' && courseContent.trim()
+        ? courseContent.trim().slice(0, 6000)
+        : '';
 
     try {
       const response = await callWithRetry(() =>
         ai.models.generateContent({
           model: MODEL_NAME,
           contents: [
-            `Explique simplement cette leçon à l'élève avec un exemple concret de la vie courante au Sénégal et une mini question de vérification.`,
+            `Explique clairement et pédagogiquement cette leçon à l'élève sans modifier le cours original, avec un exemple concret de la vie courante au Sénégal et une mini question de vérification.`,
             `Matière : ${subject}`,
             `Classe : ${classLevel}${serie ? ` (${serie})` : ''}`,
             `Leçon : ${lessonTitle}`,
             objectif ? `Objectif : ${objectif}` : '',
             Array.isArray(notions) && notions.length > 0
               ? `Notions : ${notions.join(' ; ')}`
+              : '',
+            trimmedContent
+              ? `Texte du cours à expliquer :\n"""\n${trimmedContent}\n"""`
               : '',
           ]
             .filter(Boolean)
@@ -375,6 +484,76 @@ async function createApp() {
         explanation: 'Voici l’essentiel à retenir pour cette leçon.',
         example: '',
         quickCheck: '',
+      });
+      return res.json(data);
+    } catch (err) {
+      return handleApiError(res, err);
+    }
+  });
+
+  app.post('/api/tutor/revision-plan', async (req, res) => {
+    const ai = getAiClient();
+    if (!ai) {
+      return res.status(503).json({
+        error: 'L’accompagnement pédagogique n’est pas encore activé côté serveur.',
+      });
+    }
+
+    const {
+      tutorName = 'Maya',
+      subject = 'Toutes les matières',
+      classLevel = 'CI',
+      serie = null,
+      selectedSubjects = [],
+      availableDays = '4 jours',
+      timePerDay = '45 min',
+    } = req.body ?? {};
+
+    try {
+      const response = await callWithRetry(() =>
+        ai.models.generateContent({
+          model: MODEL_NAME,
+          contents: [
+            `Élabore un planning hebdomadaire concret de révision pour un élève de ${classLevel}${serie ? ` (${serie})` : ''}.`,
+            `Matières choisies : ${Array.isArray(selectedSubjects) && selectedSubjects.length > 0 ? selectedSubjects.join(', ') : subject}`,
+            `Rythme souhaité : ${availableDays}, ${timePerDay} par jour.`,
+            `Donne : overview (résumé motivant de ${tutorName}) et sessions (liste de séances avec day, subject, focus précis du programme, duration).`,
+          ].join('\n'),
+          config: {
+            systemInstruction: buildPersonaInstruction({
+              tutorName,
+              subject,
+              classLevel,
+              serie,
+            }),
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                overview: { type: Type.STRING },
+                sessions: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      day: { type: Type.STRING },
+                      subject: { type: Type.STRING },
+                      focus: { type: Type.STRING },
+                      duration: { type: Type.STRING },
+                    },
+                    required: ['day', 'subject', 'focus', 'duration'],
+                  },
+                },
+              },
+              required: ['overview', 'sessions'],
+            },
+          },
+        }),
+      );
+
+      const data = parseJsonSafe(response.text, {
+        overview: 'Voici ton planning équilibré pour cette semaine.',
+        sessions: [],
       });
       return res.json(data);
     } catch (err) {
@@ -475,8 +654,8 @@ async function createApp() {
       const formattedItems = Array.isArray(items)
         ? items
             .map(
-              (item: { title?: string; note?: string }, idx: number) =>
-                `${idx + 1}. Titre: "${item.title || 'Sans titre'}" | Contenu: "${item.note || 'Vide'}"`,
+              (item: { title?: string; note?: string; kind?: string }, idx: number) =>
+                `${idx + 1}. [${item.kind === 'course' ? 'Cours complet ajouté' : 'Carreau'}] Titre: "${item.title || 'Sans titre'}" | Contenu: "${item.note || 'Vide'}"`,
             )
             .join('\n')
         : '';
@@ -485,9 +664,9 @@ async function createApp() {
         ai.models.generateContent({
           model: MODEL_NAME,
           contents: [
-            `Analyse ces nouveaux carreaux/notes ajoutés par l'élève sur l'écran "${screenLabel}" (${classLevel}${serie ? ` ${serie}` : ''}, matière ${subject}).`,
+            `Analyse ces nouveautés (carreaux, notes ou nouveaux cours ajoutés) sur l'écran "${screenLabel}" (${classLevel}${serie ? ` ${serie}` : ''}, matière ${subject}).`,
             formattedItems || 'Aucun nouveau contenu texte saisi pour le moment.',
-            `Donne : 1) summary (analyse claire de ce que l'élève vient d'ajouter et comment l'exploiter), 2) keyPoints (2 à 4 points clés ou améliorations concrètes), 3) suggestedQuestion (une question de révision ou d'exercice liée à cette nouveauté).`,
+            `Donne : 1) summary (analyse claire de ce qui vient d'être ajouté et comment l'exploiter sans altérer le texte original), 2) keyPoints (2 à 4 points clés ou pistes d'étude concrètes), 3) suggestedQuestion (une question de révision ou d'exercice liée à cette nouveauté).`,
           ].join('\n'),
           config: {
             systemInstruction: buildPersonaInstruction({
@@ -542,12 +721,16 @@ async function createApp() {
 
     const classLevel = siteContext.classLevel || 'CI';
     const serie = siteContext.serie || null;
+    const activeCourseContent =
+      typeof siteContext.activeCourseContent === 'string'
+        ? siteContext.activeCourseContent.slice(0, 4000)
+        : '';
     const noveltiesText =
       Array.isArray(siteContext.novelties) && siteContext.novelties.length > 0
         ? siteContext.novelties
             .map(
-              (n: { title?: string; note?: string; screenIndex?: number }) =>
-                `- [Écran ${n.screenIndex}] ${n.title}: ${n.note}`,
+              (n: { title?: string; note?: string; screenIndex?: number; kind?: string }) =>
+                `- [${n.kind === 'course' ? 'Cours ajouté' : `Écran ${n.screenIndex}`}] ${n.title}: ${n.note}`,
             )
             .join('\n')
         : 'Aucune nouveauté personnalisée ajoutée.';
@@ -564,13 +747,23 @@ async function createApp() {
 
     const controlInstruction = [
       buildPersonaInstruction({ tutorName, subject, classLevel, serie }),
-      `Tu peux aussi piloter le site lorsque l'élève le demande ou quand c'est utile via le champ "actions" :`,
+      `Tu peux piloter l'ensemble du site lorsque l'élève le demande ou quand c'est utile via le champ "actions" :`,
       `- navigate: formatIndex 0 (Cours), 1 (Entraînement), 2 (Révisions), 3 (Préparation Examen).`,
       `- set_class: classLevel parmi ["Petite Section","Moyenne Section","Grande Section","CI","CP","CE1","CE2","CM1","CM2","6e","5e","4e","3e","2nde","1re","Terminale"] et optionnellement serie.`,
-      `- open_revision_tab: tab parmi ["Quiz","Flashcards","Résumé","Planning"] (utilise-le avec navigate formatIndex 2 si nécessaire).`,
-      `- add_note_tile: ajoute un carreau personnalisé (title, note) sur l'écran actuel pour retenir une fiche ou formule.`,
-      `- toggle_focus: enabled true/false pour activer ou quitter le plein écran Focus.`,
-      `N'ajoute des actions que si l'élève demande une navigation, un changement de classe, un outil, le mode focus ou la création d'une fiche/carreau.`,
+      `- select_subject: subject (nom exact d'une matière active du niveau).`,
+      `- open_course: ouvre la grande page de lecture complète du cours (optionnellement subject ou courseId).`,
+      `- close_course: ferme la page de lecture complète pour revenir aux carreaux.`,
+      `- open_revision_tab: tab parmi ["Quiz","Flashcards","Résumé","Planning"].`,
+      `- generate_quiz: ouvre Révisions -> Quiz et lance immédiatement la génération d'un quiz sur la leçon active.`,
+      `- generate_flashcards: ouvre Révisions -> Flashcards et lance immédiatement la génération des cartes mémoire.`,
+      `- set_exercise_filter: règle les filtres d'Entraînement (category parmi ["Exercices par leçon","Devoirs","Sujets d’examen","Corrigés"], difficulty parmi ["Découverte","Entraînement","Défi"], et/ou subject).`,
+      `- generate_exercise: ouvre Entraînement et génère immédiatement un nouvel exercice adapté.`,
+      `- set_exam_date: règle la date d'examen (format YYYY-MM-DD) dans Préparation Examen.`,
+      `- update_subject_status: met à jour le statut d'une matière (subject, status parmi ["À commencer","En cours","Révisée"]).`,
+      `- add_note_tile: ajoute un carreau personnalisé (title, note) sur l'écran actuel.`,
+      `- add_course: ajoute un cours fourni par l'élève (title, content, subject optionnel). RÈGLE STRICTE : lorsque l'élève donne un cours (titre + texte), conserve content STRICTEMENT MOT POUR MOT tel que fourni, sans rien modifier ni résumer !`,
+      `- toggle_focus: enabled true/false pour activer ou quitter le mode Focus.`,
+      `N'ajoute des actions que lorsqu'elles répondent directement à la demande de l'élève.`,
     ].join('\n');
 
     try {
@@ -580,10 +773,16 @@ async function createApp() {
           contents: [
             `Contexte actuel du site :`,
             `- Écran actif : ${siteContext.screenLabel || 'Cours'} (index ${siteContext.activeFormat ?? 0})`,
+            `- Lecteur de cours pleine page ouvert : ${siteContext.isCourseReaderOpen ? 'oui' : 'non'}`,
             `- Classe : ${classLevel}${serie ? ` (${serie})` : ''}`,
+            `- Matière active : ${siteContext.activeSubject || subject}`,
             `- Matières du niveau : ${Array.isArray(siteContext.subjects) ? siteContext.subjects.join(', ') : subject}`,
+            siteContext.activeCourseTitle
+              ? `- Cours actuellement affiché : ${siteContext.activeCourseTitle}`
+              : '',
+            activeCourseContent ? `Extrait du cours affiché :\n${activeCourseContent}` : '',
             `- Mode Focus plein écran : ${siteContext.isFocusMode ? 'actif' : 'inactif'}`,
-            `- Nouveautés / carreaux ajoutés :\n${noveltiesText}`,
+            `- Nouveautés / carreaux / cours ajoutés :\n${noveltiesText}`,
             historyText ? `Historique récent :\n${historyText}` : '',
             `Message de l'élève : ${message}`,
           ]
@@ -605,9 +804,16 @@ async function createApp() {
                       formatIndex: { type: Type.INTEGER },
                       classLevel: { type: Type.STRING },
                       serie: { type: Type.STRING },
+                      subject: { type: Type.STRING },
+                      courseId: { type: Type.STRING },
                       tab: { type: Type.STRING },
+                      category: { type: Type.STRING },
+                      difficulty: { type: Type.STRING },
+                      date: { type: Type.STRING },
+                      status: { type: Type.STRING },
                       title: { type: Type.STRING },
                       note: { type: Type.STRING },
+                      content: { type: Type.STRING },
                       enabled: { type: Type.BOOLEAN },
                     },
                     required: ['type'],

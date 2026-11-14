@@ -1,6 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Minimize2 } from 'lucide-react';
-import { ClassLevel, getClassExperience, SerieOption } from '../data/studyData';
+import { CustomVerbatimCourse } from '../data/pdfCourses';
+import {
+  ClassLevel,
+  getClassExperience,
+  SerieOption,
+  SubjectStatus,
+} from '../data/studyData';
 import {
   BentoLayoutsState,
   bringTileToFront,
@@ -29,7 +35,10 @@ import { SectionBottomStrip } from './SectionBottomStrip';
 import { SidebarRail } from './SidebarRail';
 import { TopClassBar } from './TopClassBar';
 import { CoursScreen } from './screens/CoursScreen';
-import { ExercicesScreen } from './screens/ExercicesScreen';
+import {
+  ExerciseFilterCommand,
+  ExercicesScreen,
+} from './screens/ExercicesScreen';
 import { PreparationExamenScreen } from './screens/PreparationExamenScreen';
 import { RevisionsScreen, RevisionTab } from './screens/RevisionsScreen';
 
@@ -45,11 +54,25 @@ interface BentoFormatViewProps {
   isFocusMode?: boolean;
   tutor?: SubjectTutorPersona;
   noveltiesCount?: number;
+  selectedSubject?: string;
+  customCourses?: CustomVerbatimCourse[];
   requestedRevisionTab?: RevisionTab | null;
+  pendingRevisionAiTrigger?: 'quiz' | 'flashcards' | null;
+  pendingExerciseAiTrigger?: 'exercise' | null;
+  exerciseFilterOverride?: ExerciseFilterCommand | null;
+  examDate?: string;
+  subjectStatuses?: Record<string, SubjectStatus>;
   onClearRequestedTab?: () => void;
+  onClearPendingRevisionAiTrigger?: () => void;
+  onClearPendingExerciseAiTrigger?: () => void;
+  onExamDateChange?: (date: string) => void;
+  onSubjectStatusesChange?: React.Dispatch<React.SetStateAction<Record<string, SubjectStatus>>>;
   onSubjectChange?: (subject: string) => void;
+  onOpenCourseReader?: (subject: string, customCourseId?: string) => void;
   onAnalyzeTile?: (tile: TileRect) => Promise<NoveltyAnalysisResult>;
   onOpenTutor?: () => void;
+  openTileId?: string | null;
+  onSelectOpenTileId?: (tileId: string | null) => void;
   onToggleLayoutLock: () => void;
   onToggleFocus?: () => void;
   onNavigateTo: (target: FormatIndex) => void;
@@ -69,11 +92,25 @@ export const BentoFormatView: React.FC<BentoFormatViewProps> = ({
   isFocusMode = false,
   tutor,
   noveltiesCount = 0,
+  selectedSubject,
+  customCourses = [],
   requestedRevisionTab = null,
+  pendingRevisionAiTrigger = null,
+  pendingExerciseAiTrigger = null,
+  exerciseFilterOverride = null,
+  examDate,
+  subjectStatuses,
   onClearRequestedTab,
+  onClearPendingRevisionAiTrigger,
+  onClearPendingExerciseAiTrigger,
+  onExamDateChange,
+  onSubjectStatusesChange,
   onSubjectChange,
+  onOpenCourseReader,
   onAnalyzeTile,
   onOpenTutor,
+  openTileId = null,
+  onSelectOpenTileId,
   onToggleLayoutLock,
   onToggleFocus,
   onNavigateTo,
@@ -82,23 +119,29 @@ export const BentoFormatView: React.FC<BentoFormatViewProps> = ({
 }) => {
   const meta = FORMAT_META[formatIndex];
   const shellRef = useRef<HTMLDivElement | null>(null);
+  const [shellEl, setShellEl] = useState<HTMLDivElement | null>(null);
   const [shellInnerHeightPx, setShellInnerHeightPx] = useState<number>(556);
 
+  const handleShellRef = useCallback((node: HTMLDivElement | null) => {
+    shellRef.current = node;
+    setShellEl(node);
+  }, []);
+
   useEffect(() => {
-    const el = shellRef.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
+    if (!shellEl) return;
     const update = () => {
-      const style = window.getComputedStyle(el);
+      const style = window.getComputedStyle(shellEl);
       const padY =
         (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
-      const innerH = Math.max(260, Math.round(el.clientHeight - padY));
+      const innerH = Math.max(260, Math.round(shellEl.clientHeight - padY));
       setShellInnerHeightPx((prev) => (Math.abs(prev - innerH) > 1 ? innerH : prev));
     };
     update();
+    if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(update);
-    observer.observe(el);
+    observer.observe(shellEl);
     return () => observer.disconnect();
-  }, [isFocusMode]);
+  }, [shellEl, isFocusMode]);
 
   const experience = useMemo(
     () => getClassExperience(state.selectedClass, state.selectedSerie),
@@ -139,7 +182,10 @@ export const BentoFormatView: React.FC<BentoFormatViewProps> = ({
       const customCount = current.filter((t) => t.isCustom).length;
       return {
         ...prev,
-        [formatIndex]: [...current, createCustomTile(current, customCount)],
+        [formatIndex]: [
+          ...current,
+          createCustomTile(current, customCount, selectedSubject),
+        ],
       };
     });
     window.requestAnimationFrame(() => {
@@ -169,15 +215,33 @@ export const BentoFormatView: React.FC<BentoFormatViewProps> = ({
 
   const classTag = `${experience.classLevel}${experience.serie ? ` · ${experience.serie}` : ''}`;
 
+  const handleOpenTilePage = useCallback(
+    (tile: TileRect) => {
+      if (tile.id === 'cours-main' && onOpenCourseReader) {
+        onOpenCourseReader(selectedSubject ?? experience.subjects[0] ?? 'Français');
+        return;
+      }
+      onSelectOpenTileId?.(tile.id);
+    },
+    [experience.subjects, onOpenCourseReader, onSelectOpenTileId, selectedSubject],
+  );
+
   const renderActiveScreen = () => (
     <>
       {formatIndex === 0 && (
         <CoursScreen
           experience={experience}
+          selectedSubject={selectedSubject}
+          customCourses={customCourses}
           tiles={activeTiles}
           baseHeightPx={shellInnerHeightPx}
           locked={isFocusMode || isLayoutLocked}
+          openTileId={openTileId}
+          onSelectOpenTileId={onSelectOpenTileId}
+          onOpenTilePage={handleOpenTilePage}
+          onOpenTutor={onOpenTutor}
           onSubjectChange={onSubjectChange}
+          onOpenCourseReader={onOpenCourseReader}
           onAnalyzeTile={onAnalyzeTile}
           onChangeTiles={handleChangeTiles}
           onBringToFront={handleBringToFront}
@@ -192,9 +256,17 @@ export const BentoFormatView: React.FC<BentoFormatViewProps> = ({
         <ExercicesScreen
           experience={experience}
           initialSubject={exerciseSubjectPrefill}
+          customCourses={customCourses}
+          externalFilter={exerciseFilterOverride}
+          pendingAiTrigger={pendingExerciseAiTrigger}
+          onClearPendingAiTrigger={onClearPendingExerciseAiTrigger}
           tiles={activeTiles}
           baseHeightPx={shellInnerHeightPx}
           locked={isFocusMode || isLayoutLocked}
+          openTileId={openTileId}
+          onSelectOpenTileId={onSelectOpenTileId}
+          onOpenTilePage={handleOpenTilePage}
+          onOpenTutor={onOpenTutor}
           onSubjectChange={onSubjectChange}
           onAnalyzeTile={onAnalyzeTile}
           onChangeTiles={handleChangeTiles}
@@ -206,25 +278,47 @@ export const BentoFormatView: React.FC<BentoFormatViewProps> = ({
       {formatIndex === 2 && (
         <RevisionsScreen
           experience={experience}
+          selectedSubject={selectedSubject}
+          customCourses={customCourses}
           tiles={activeTiles}
           baseHeightPx={shellInnerHeightPx}
           locked={isFocusMode || isLayoutLocked}
           requestedTab={requestedRevisionTab}
+          pendingAiTrigger={pendingRevisionAiTrigger}
+          openTileId={openTileId}
+          onSelectOpenTileId={onSelectOpenTileId}
+          onOpenTilePage={handleOpenTilePage}
+          onOpenTutor={onOpenTutor}
           onClearRequestedTab={onClearRequestedTab}
+          onClearPendingAiTrigger={onClearPendingRevisionAiTrigger}
           onSubjectChange={onSubjectChange}
           onAnalyzeTile={onAnalyzeTile}
           onChangeTiles={handleChangeTiles}
           onBringToFront={handleBringToFront}
-          onOpenFullCourse={() => onNavigateTo(0)}
+          onOpenFullCourse={(subject) => {
+            if (onOpenCourseReader) {
+              onOpenCourseReader(subject ?? selectedSubject ?? experience.subjects[0] ?? 'Français');
+            } else {
+              onNavigateTo(0);
+            }
+          }}
         />
       )}
 
       {formatIndex === 3 && (
         <PreparationExamenScreen
           experience={experience}
+          examDate={examDate}
+          onExamDateChange={onExamDateChange}
+          subjectStatuses={subjectStatuses}
+          onSubjectStatusesChange={onSubjectStatusesChange}
           tiles={activeTiles}
           baseHeightPx={shellInnerHeightPx}
           locked={isFocusMode || isLayoutLocked}
+          openTileId={openTileId}
+          onSelectOpenTileId={onSelectOpenTileId}
+          onOpenTilePage={handleOpenTilePage}
+          onOpenTutor={onOpenTutor}
           onSubjectChange={onSubjectChange}
           onAnalyzeTile={onAnalyzeTile}
           onChangeTiles={handleChangeTiles}
@@ -293,7 +387,7 @@ export const BentoFormatView: React.FC<BentoFormatViewProps> = ({
       label: 'le grand cadre',
       render: () => (
         <div
-          ref={shellRef}
+          ref={handleShellRef}
           className="sg-glass-shell flex h-full w-full min-w-0 flex-col overflow-y-auto overflow-x-hidden rounded-[26px] p-[10px] md:p-[12px]"
         >
           {renderActiveScreen()}
@@ -362,7 +456,7 @@ export const BentoFormatView: React.FC<BentoFormatViewProps> = ({
         </div>
 
         <div
-          ref={shellRef}
+          ref={handleShellRef}
           className="sg-glass-shell flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden rounded-[22px] p-[8px] md:rounded-[26px] md:p-[12px]"
         >
           {renderActiveScreen()}

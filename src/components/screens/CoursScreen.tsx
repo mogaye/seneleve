@@ -1,5 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, Sparkles } from 'lucide-react';
+import { BookOpen, Loader2, Sparkles } from 'lucide-react';
+import {
+  CustomVerbatimCourse,
+  formatCourseDocumentAsPlainText,
+  getPdfCourseDocument,
+} from '../../data/pdfCourses';
 import { ClassExperience, LessonItem } from '../../data/studyData';
 import { requestLessonExplanation } from '../../services/tutorClient';
 import { TileRect } from '../../utils/bentoLayout';
@@ -8,10 +13,17 @@ import { BentoTileCanvas, BuiltInTileSlot } from '../BentoTileCanvas';
 
 interface CoursScreenProps {
   experience: ClassExperience;
+  selectedSubject?: string;
+  customCourses?: CustomVerbatimCourse[];
   tiles: TileRect[];
   baseHeightPx?: number;
   locked?: boolean;
+  openTileId?: string | null;
+  onSelectOpenTileId?: (tileId: string | null) => void;
+  onOpenTilePage?: (tile: TileRect) => void;
+  onOpenTutor?: () => void;
   onSubjectChange?: (subject: string) => void;
+  onOpenCourseReader?: (subject: string, customCourseId?: string) => void;
   onAnalyzeTile?: (tile: TileRect) => Promise<NoveltyAnalysisResult>;
   onChangeTiles: (next: TileRect[]) => void;
   onBringToFront: (tileId: string) => void;
@@ -20,10 +32,17 @@ interface CoursScreenProps {
 
 export const CoursScreen: React.FC<CoursScreenProps> = ({
   experience,
+  selectedSubject: controlledSubject,
+  customCourses = [],
   tiles,
   baseHeightPx,
   locked = false,
+  openTileId = null,
+  onSelectOpenTileId,
+  onOpenTilePage,
+  onOpenTutor,
   onSubjectChange,
+  onOpenCourseReader,
   onAnalyzeTile,
   onChangeTiles,
   onBringToFront,
@@ -31,7 +50,11 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
 }) => {
   const { subjects, lessons } = experience;
 
-  const [selectedSubject, setSelectedSubject] = useState<string>(subjects[0] ?? 'Français');
+  const [selectedSubject, setSelectedSubject] = useState<string>(
+    controlledSubject && subjects.includes(controlledSubject)
+      ? controlledSubject
+      : subjects[0] ?? 'Français',
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedQuery, setAppliedQuery] = useState('');
   const [activeStep, setActiveStep] = useState<number>(1);
@@ -51,11 +74,21 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
   const tutor = useMemo(() => getSubjectTutor(selectedSubject), [selectedSubject]);
 
   useEffect(() => {
+    if (controlledSubject && subjects.includes(controlledSubject)) {
+      setSelectedSubject(controlledSubject);
+    }
+  }, [controlledSubject, subjects]);
+
+  useEffect(() => {
     onSubjectChange?.(selectedSubject);
   }, [selectedSubject, onSubjectChange]);
 
   useEffect(() => {
-    setSelectedSubject(subjects[0] ?? 'Français');
+    const nextDefault =
+      controlledSubject && subjects.includes(controlledSubject)
+        ? controlledSubject
+        : subjects[0] ?? 'Français';
+    setSelectedSubject(nextDefault);
     setSearchQuery('');
     setAppliedQuery('');
     setActiveStep(1);
@@ -64,6 +97,16 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
     setLessonExplain(null);
     setConsultedIds(lessons[0] ? [lessons[0].id] : []);
   }, [experience.classLevel, experience.serie, subjects, lessons]);
+
+  const classCustomCourses = useMemo(
+    () =>
+      customCourses.filter(
+        (c) =>
+          c.classLevel === experience.classLevel &&
+          (c.serie ?? null) === (experience.serie ?? null),
+      ),
+    [customCourses, experience.classLevel, experience.serie],
+  );
 
   const filteredLessons = useMemo(() => {
     const q = appliedQuery.trim().toLowerCase();
@@ -107,11 +150,15 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
   const ringOffset = ringCircumference * (1 - progressPercent / 100);
 
   const openLesson = (lesson: LessonItem, notionIdx: number | null = null) => {
-    setOpenLessonId(lesson.id);
     setSelectedSubject(lesson.subject);
     setSelectedNotionIdx(notionIdx);
     setActiveStep(4);
     setConsultedIds((prev) => (prev.includes(lesson.id) ? prev : [...prev, lesson.id]));
+    if (onOpenCourseReader) {
+      onOpenCourseReader(lesson.subject);
+      return;
+    }
+    setOpenLessonId(lesson.id);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -124,6 +171,14 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
     const lessonTutor = getSubjectTutor(lesson.subject);
     setLessonExplain({ lessonId: lesson.id, loading: true });
     try {
+      const doc = getPdfCourseDocument({
+        classLevel: experience.classLevel,
+        serie: experience.serie,
+        subject: lesson.subject,
+        fallbackTitle: lesson.title,
+        fallbackObjectif: lesson.objectif,
+        fallbackNotions: lesson.notions,
+      });
       const data = await requestLessonExplanation({
         tutorName: lessonTutor.name,
         subject: lesson.subject,
@@ -132,6 +187,7 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
         lessonTitle: lesson.title,
         objectif: lesson.objectif,
         notions: lesson.notions,
+        courseContent: formatCourseDocumentAsPlainText(doc),
       });
       setLessonExplain({ lessonId: lesson.id, loading: false, data });
     } catch (err) {
@@ -238,6 +294,41 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
                   Rechercher
                 </button>
               </form>
+
+              {/* Custom verbatim courses added for this class */}
+              {classCustomCourses.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.05em] text-[var(--accent)]">
+                    <span>Tes cours ajoutés ({classCustomCourses.length})</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 @sm:grid-cols-2">
+                    {classCustomCourses.map((course) => (
+                      <button
+                        key={course.id}
+                        type="button"
+                        onClick={() => onOpenCourseReader?.(course.subject, course.id)}
+                        className="sg-focus-ring sg-selected-capsule flex flex-col items-start gap-1 rounded-[16px] px-3.5 py-2.5 text-left transition-colors hover:bg-[var(--accent-soft)]"
+                      >
+                        <div className="flex w-full items-center justify-between gap-2">
+                          <span className="flex items-center gap-1 text-[11px] font-semibold text-[var(--accent)]">
+                            <BookOpen className="h-[11.5px] w-[11.5px]" />
+                            {course.subject}
+                          </span>
+                          <span className="text-[10.5px] font-medium text-[#4B4E54]">
+                            Texte intégral
+                          </span>
+                        </div>
+                        <span className="text-[12.5px] font-bold text-[#121417] line-clamp-1">
+                          {course.title}
+                        </span>
+                        <span className="text-[11px] text-[#4B4E54] line-clamp-1">
+                          {course.content}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Class-specific lessons grid */}
               <div
@@ -423,6 +514,7 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
             <h2 className="text-[13px] font-bold text-[#121417]">Choisir une matière</h2>
             <span className="text-[11px] font-semibold text-[var(--accent)]">
               {experience.classLevel}
+              {experience.serie ? ` (${experience.serie})` : ''}
             </span>
           </div>
 
@@ -691,6 +783,14 @@ export const CoursScreen: React.FC<CoursScreenProps> = ({
       baseHeightPx={baseHeightPx}
       locked={locked}
       tutorName={tutor.name}
+      tutor={tutor}
+      formatIndex={0}
+      experience={experience}
+      availableSubjects={subjects}
+      openTileId={openTileId}
+      onSelectOpenTileId={onSelectOpenTileId}
+      onOpenTilePage={onOpenTilePage}
+      onOpenTutor={onOpenTutor}
       onAnalyzeTile={onAnalyzeTile}
       onChangeTiles={onChangeTiles}
       onBringToFront={onBringToFront}

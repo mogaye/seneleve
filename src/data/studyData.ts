@@ -622,76 +622,80 @@ function getCollegeSpecs(classLevel: '6e' | '5e' | '4e' | '3e'): SubjectSpec[] {
     return [
       {
         subject: 'Français',
-        title: 'Récit, description et phrase simple',
-        objectif: 'Maîtriser la lecture de textes courts, les classes de mots et les accords de base.',
+        title: 'Communication, conte, récit, description et langue',
+        objectif: 'Maîtriser les 12 leçons de lecture, récit merveilleux, description, grammaire et accords.',
         notions: [
-          'Lecture et compréhension de textes, récit et description',
-          'Vocabulaire, phrase simple, classes de mots et accords de base',
-          'Conjugaison des temps usuels, rédaction et expression orale',
-        ],
-      },
-      {
-        subject: 'Anglais',
-        title: 'Premiers échanges et environnement scolaire',
-        objectif: 'Se présenter, saluer et utiliser les structures élémentaires.',
-        notions: [
-          'Se présenter, saluer, donner des informations personnelles',
-          'Parler de la famille et de l’école, nombres, dates, objets et consignes',
+          'Situation de communication, registres de langue, conte et récit merveilleux',
+          'Description, lettre personnelle, poésie, fables et premières scènes de théâtre',
+          'Phrase simple, groupe nominal, verbe, conjugaison, accords et formation des mots',
         ],
       },
       {
         subject: 'Mathématiques',
-        title: 'Décimaux, fractions, figures planes et périmètres',
-        objectif: 'Calculer avec les décimaux et fractions et construire les figures de base.',
+        title: 'Décimaux, proportionnalité, géométrie plane et repérage',
+        objectif: 'Calculer avec les décimaux et relatifs, construire les figures de base et calculer les aires.',
         notions: [
-          'Nombres décimaux, opérations, divisibilité, fractions et proportionnalité',
-          'Expressions numériques, droites, segments, angles, triangles, quadrilatères et symétrie',
-          'Mesures, périmètres et résolution de problèmes',
+          'Nombres décimaux, opérations, organisation d’un calcul, proportionnalité et pourcentages',
+          'Nombres décimaux relatifs et repérage sur une droite, dans le plan et sur la sphère',
+          'Cercle, droites perpendiculaires et parallèles, symétrie orthogonale, angles, polygones, aires et espace',
         ],
       },
       {
         subject: 'Histoire',
-        title: 'Repères chronologiques et civilisations anciennes',
-        objectif: 'Utiliser les sources historiques et situer les premiers peuplements.',
+        title: 'Préhistoire, Afrique antique et civilisations anciennes',
+        objectif: 'Explorer la chronologie, la préhistoire au Sénégal et les civilisations antiques (22 leçons).',
         notions: [
-          'Outils, repères de temps et sources historiques',
-          'Premiers peuplements, civilisations anciennes et histoire africaine et sénégalaise',
+          'Sources, chronologie, préhistoire africaine et protohistoire sénégalaise',
+          'Égypte pharaonique, Nubie, Éthiopie antique et civilisation carthaginoise',
+          'Mésopotamie, Palestine, Grèce antique, Rome, christianisme et grandes invasions',
         ],
       },
       {
         subject: 'Géographie',
-        title: 'Cartes, globe et repères du Sénégal',
-        objectif: 'Lire cartes et plans et décrire le milieu local et régional.',
+        title: 'Grandes régions du Sénégal et organisation de l’espace',
+        objectif: 'Localiser et analyser les grandes régions sénégalaises (39 leçons).',
         notions: [
-          'Outils de la géographie, cartes et globe',
-          'Milieu local et régional, grands ensembles et repères du Sénégal',
+          'Bassin arachidier, Dakar et littoral central : relief, populations et activités',
+          'Ferlo et Vallée du Sénégal : élevage, barrages, irrigation et ressources en eau',
+          'Casamance et Haut-Sénégal : milieux, voies de communication et enjeux de développement',
         ],
       },
       {
-        subject: 'SVT / Sciences physiques',
-        title: 'Initiation au vivant, à la matière, à l’eau et à l’air',
-        objectif: 'Observer le vivant et les premiers phénomènes physiques.',
+        subject: 'Anglais',
+        title: 'Salutations, quotidien, projets et prétérit',
+        objectif: 'Acquérir les bases de la communication orale et écrite en 16 leçons.',
         notions: [
-          'Observation scientifique, vivant et milieu, corps et santé',
-          'Matière, objets, eau, air et phénomènes physiques d’initiation',
+          'Salutations, salle de classe, nombres, heure, famille, maison et goûts',
+          'Habitudes quotidiennes, présent continu, achats au marché, météo et santé (can, must, may)',
+          'Récit au prétérit et projets futurs avec going to',
         ],
       },
       {
-        subject: 'Technologie',
-        title: 'Objets techniques et fonction d’usage',
-        objectif: 'Identifier matériaux, usages et bases du dessin technique.',
+        subject: 'Physique-Chimie',
+        title: 'Initiation à la matière, mesures, eau et air',
+        objectif: 'Observer les grandeurs physiques, états de la matière et propriétés de l’eau et de l’air.',
         notions: [
-          'Objets techniques, matériaux et fonction d’usage',
-          'Dessin et premières démarches de conception ou fabrication',
+          'Observation des états de la matière, mesures simples de longueur, masse et volume',
+          'Propriétés usuelles de l’eau, de l’air et phénomènes physiques quotidiens',
+        ],
+      },
+      {
+        subject: 'SVT',
+        title: 'Environnement, végétaux, cellules, santé et paysages',
+        objectif: 'Maîtriser les 12 leçons sur le vivant, la nutrition végétale, la prévention et les roches.',
+        notions: [
+          'Environnement, classification des êtres vivants, chaînes alimentaires et photosynthèse',
+          'Déplacement des animaux, cellule, division cellulaire et germination des plantes',
+          'Prévention du paludisme, de l’ascaridiase et du choléra ; roches et évolution des paysages',
         ],
       },
       {
         subject: 'Éducation civique',
         title: 'Règles de vie, droits, devoirs et institutions proches',
-        objectif: 'Respecter les biens communs et la vie scolaire.',
+        objectif: 'Respecter les biens communs, les règles et la citoyenneté au collège.',
         notions: [
-          'Règles de vie, famille, école, droits et devoirs',
-          'Respect des biens et des institutions proches',
+          'Règles de vie collective, droits et devoirs de l’élève',
+          'Respect des biens publics, solidarité et institutions proches',
         ],
       },
       {
@@ -700,7 +704,7 @@ function getCollegeSpecs(classLevel: '6e' | '5e' | '4e' | '3e'): SubjectSpec[] {
         objectif: 'Développer endurance, coordination, dessin et musique.',
         notions: [
           'Activités athlétiques, jeux, sports collectifs et expression corporelle',
-          'Dessin et musique',
+          'Dessin, arts plastiques et musique',
         ],
       },
     ];
@@ -710,66 +714,71 @@ function getCollegeSpecs(classLevel: '6e' | '5e' | '4e' | '3e'): SubjectSpec[] {
     return [
       {
         subject: 'Français',
-        title: 'Lecture analytique, dialogue et grammaire du texte',
-        objectif: 'Structurer la rédaction narrative, descriptive et documentaire.',
+        title: 'Théâtre, épopée, récit, phrase complexe et style',
+        objectif: 'Approfondir la lecture littéraire et l’analyse syntaxique en 12 leçons.',
         notions: [
-          'Lecture analytique, narration, description, dialogue et textes documentaires',
-          'Grammaire de la phrase et du texte, conjugaison, orthographe et rédaction structurée',
-        ],
-      },
-      {
-        subject: 'Anglais',
-        title: 'Vie quotidienne, habitudes et récits simples',
-        objectif: 'Exprimer goûts, activités et petits récits au présent et au passé.',
-        notions: [
-          'Parler de la vie quotidienne, habitudes, goûts, lieux et activités',
-          'Questions, descriptions et petits récits au présent et au passé simple',
+          'Théâtre et comédie, épopée, mythes, légendes, description, récit et dialogue',
+          'Lettre, messages courts et recherche documentaire pour présenter et débattre',
+          'Groupe nominal, transitivité, phrase complexe, conjugaison, accords et dérivation',
         ],
       },
       {
         subject: 'Mathématiques',
-        title: 'Nombres relatifs, PGCD/PPCM et calcul littéral initial',
-        objectif: 'Manipuler puissances, nombres premiers, fractions et géométrie plane.',
+        title: 'Puissances, PGCD/PPCM, fractions, symétrie et espace',
+        objectif: 'Maîtriser les 12 leçons de calcul numérique, proportionnalité et géométrie.',
         notions: [
-          'Puissances, nombres relatifs, divisibilité, nombres premiers, PGCD/PPCM',
-          'Fractions, calcul littéral initial, proportionnalité et problèmes',
-          'Géométrie plane, symétrie, constructions et mesures',
+          'Puissances, nombres premiers, PGCD/PPCM, fractions, proportionnalité et décimaux relatifs',
+          'Symétrie centrale, angles, parallélogrammes, triangles et quadrilatères',
+          'Représentations graphiques et géométrie dans l’espace (prismes, cylindres, aires, volumes)',
         ],
       },
       {
         subject: 'Histoire',
-        title: 'Sociétés anciennes et médiévales',
-        objectif: 'Situer l’Afrique et le Sénégal dans les civilisations anciennes et médiévales.',
+        title: 'Empires d’Afrique de l’Ouest, Islam et Sénégambie',
+        objectif: 'Étudier les 22 leçons sur l’Afrique médiévale, la Sénégambie et le monde.',
         notions: [
-          'Sociétés et civilisations anciennes et médiévales',
-          'Afrique et Sénégal dans les repères historiques du programme',
+          'Naissance et expansion de l’islam ; grands empires : Ghana, Mali, Songhaï et cités d’Afrique',
+          'Sénégambie : peuplement, Tekrour, Fouta, Jolof et Gaabu',
+          'Féodalité, Humanisme, Renaissance, civilisations précolombiennes et grands voyages',
         ],
       },
       {
         subject: 'Géographie',
-        title: 'L’Afrique : milieux, population et ressources',
-        objectif: 'Lire cartes et documents sur les villes et activités africaines.',
+        title: 'Le Sénégal : milieu physique, population et économie',
+        objectif: 'Connaître les 26 leçons complètes sur la géographie du Sénégal.',
         notions: [
-          'Afrique : milieux naturels, population, villes, activités et ressources',
-          'Lecture de cartes et de documents géographiques',
+          'Localisation, géologie, relief, climat, sols, végétation, hydrographie et écosystèmes du Sénégal',
+          'Peuplement, croissance démographique, pyramide des âges, migrations et urbanisation',
+          'Agriculture, élevage, pêche, artisanat, industrie, tourisme, transports et disparités régionales',
         ],
       },
       {
-        subject: 'SVT / Sciences physiques',
-        title: 'Fonctions biologiques, mélanges et propriétés de la matière',
-        objectif: 'Étudier l’organisation du vivant et réaliser des mesures physiques.',
+        subject: 'Anglais',
+        title: 'Quotidien, futur, present perfect, prétérit et discours',
+        objectif: 'Communiquer dans des situations variées au travers de 16 leçons.',
         notions: [
-          'Organisation du vivant, environnement, santé et fonctions biologiques',
-          'Propriétés de la matière, mélanges, mesures et phénomènes physiques',
+          'Présent simple et continu, nourriture et quantités, règles, futur et conseils de santé',
+          'Voix passive, present perfect, prétérit simple et continu, comparaisons et directions',
+          'Conditionnel de type 1 et discours rapporté',
         ],
       },
       {
-        subject: 'Technologie',
-        title: 'Analyse d’objets et représentation technique',
-        objectif: 'Associer matériaux, fonctions et réalisation simple.',
+        subject: 'Physique-Chimie',
+        title: 'Mesures, mélanges, propriétés physiques et transformations',
+        objectif: 'Consolidation expérimentale des propriétés de la matière et des mélanges.',
         notions: [
-          'Analyse d’objets, matériaux et fonctions',
-          'Représentation technique et réalisation simple',
+          'Mesures physiques de base, masses, volumes et états de la matière',
+          'Mélanges, séparations et phénomènes physiques du quotidien',
+        ],
+      },
+      {
+        subject: 'SVT',
+        title: 'Cadre de vie, nutrition, respiration, reproduction et sols',
+        objectif: 'Maîtriser les 12 leçons de biologie animale/végétale et de géologie sédimentaire.',
+        notions: [
+          'Cadre de vie rural/urbain, pollutions et prévention santé ; régimes alimentaires et besoins nutritionnels',
+          'Respiration animale, reproduction des animaux et des plantes avec ou sans fleurs',
+          'Constituants, formation et protection des sols ; roches sédimentaires et fossiles',
         ],
       },
       {
@@ -787,7 +796,7 @@ function getCollegeSpecs(classLevel: '6e' | '5e' | '4e' | '3e'): SubjectSpec[] {
         objectif: 'Poursuivre l’entraînement sportif et l’expression artistique.',
         notions: [
           'Athlétisme et jeux sportifs',
-          'Expression artistique',
+          'Expression plastique et musicale',
         ],
       },
     ];
@@ -797,72 +806,78 @@ function getCollegeSpecs(classLevel: '6e' | '5e' | '4e' | '3e'): SubjectSpec[] {
     return [
       {
         subject: 'Français',
-        title: 'Textes explicatifs, argumentatifs, poétiques et propositions',
-        objectif: 'Analyser la phrase complexe, les fonctions et produire des textes variés.',
+        title: 'Nouvelle fantastique, roman, argumentation et subordination',
+        objectif: 'Analyser récits, presse et textes argumentatifs en 12 leçons.',
         notions: [
-          'Textes narratifs, descriptifs, explicatifs, argumentatifs et poétiques',
-          'Analyse de langue, propositions, fonctions, accords et conjugaison',
-        ],
-      },
-      {
-        subject: 'Anglais',
-        title: 'Expériences, opinion, comparaison et conseil',
-        objectif: 'Exprimer obligation, possibilité, comparaison et compréhension orale/écrite.',
-        notions: [
-          'Décrire des expériences et projets, raconter et comparer',
-          'Exprimer opinion, obligation, possibilité et conseil',
+          'Nouvelle et conte fantastique, roman intégral, poésie et information (fait divers, article)',
+          'Récit enrichi avec dialogue, lettre administrative et argumentation structurée',
+          'Phrase complexe, subordination, discours direct/indirect, conjugaison et style',
         ],
       },
       {
         subject: 'Mathématiques',
-        title: 'Calcul littéral, équations, Pythagore et statistiques',
-        objectif: 'Développer, factoriser, résoudre des équations et étudier les transformations.',
+        title: 'Rationnels, équations, vecteurs, rotations et statistiques',
+        objectif: 'Maîtriser les 14 leçons d’algèbre, géométrie vectorielle et statistique.',
         notions: [
-          'Nombres rationnels et relatifs, calcul littéral, développement et factorisation',
-          'Équations et inéquations simples, proportionnalité et applications linéaires',
-          'Triangles, parallélisme, transformations, Pythagore, espace et statistiques',
+          'Nombres rationnels, calcul algébrique, équations, systèmes d’inéquations et applications linéaires',
+          'Statistiques, distances, bissectrices, droites des milieux, médianes et triangle rectangle',
+          'Translations, vecteurs, rotations, polygones réguliers, projection orthogonale et espace',
         ],
       },
       {
         subject: 'Histoire',
-        title: 'Grandes transformations politiques, économiques et sociales',
-        objectif: 'Relier les mutations mondiales à l’histoire de l’Afrique et du Sénégal.',
+        title: 'Traite négrière, royaumes d’Afrique et révolutions (XVIIIe-XIXe)',
+        objectif: 'Étudier les 24 leçons de l’histoire atlantique, sénégambienne et moderne.',
         notions: [
-          'Grandes transformations politiques, économiques et sociales',
-          'Histoire de l’Afrique et du Sénégal intégrée à la progression',
+          'Afrique au XVIe siècle, traite négrière, conséquences, Sénégal et mouvement abolitionniste',
+          'Sénégambie (dislocation du Jolof, Fouta, Gaabu), Sokoto, Macina, El Hadji Omar Tall et Tchaka',
+          'Première révolution industrielle, Lumières, Révolution française, États-Unis et méthodologie',
         ],
       },
       {
         subject: 'Géographie',
-        title: 'Grands ensembles régionaux et développement',
-        objectif: 'Analyser ressources, populations et enjeux environnementaux.',
+        title: 'Afrique de l’Ouest, Afrique et grands ensembles continentaux',
+        objectif: 'Analyser intégration régionale et disparités mondiales en 22 leçons.',
         notions: [
-          'Grands ensembles régionaux, populations et activités',
-          'Ressources, développement et enjeux environnementaux',
+          'Afrique de l’Ouest et continent africain : cartes, développement, intégration et coopération',
+          'Europe et Amérique : reliefs, populations, économies et intégration régionale',
+          'Asie et Océanie : contrastes naturels, populations, disparités économiques et cartes',
         ],
       },
       {
-        subject: 'SVT / Sciences physiques',
-        title: 'Corps humain, électricité, mécanique et optique',
-        objectif: 'Relier fonctions biologiques et transformations physiques de la matière.',
+        subject: 'Anglais',
+        title: 'Ville, village, migrations, emplois, culture et santé',
+        objectif: 'Développer compréhension écrite, opinion et vocabulaire en 15 leçons.',
         notions: [
-          'Fonctions du corps, santé, reproduction et environnement',
-          'Électricité, mécanique, optique et transformations de la matière',
+          'Identité, révision des temps, vie urbaine et rurale, exode rural, voyages et communication',
+          'Récits au passé, métiers, entretien d’embauche, lettres, tableaux et graphiques',
+          'Patrimoine culturel, valeurs morales, éducation et prévention santé',
         ],
       },
       {
-        subject: 'Technologie',
-        title: 'Systèmes techniques, énergie et projet',
-        objectif: 'Concevoir un projet en choisissant matériaux et source d’énergie.',
+        subject: 'Physique-Chimie',
+        title: 'Grandeurs, électricité, optique et réactions chimiques',
+        objectif: 'Maîtriser les 12 leçons d’électricité, optique géométrique et chimie fondamentale.',
         notions: [
-          'Systèmes techniques, énergie et représentation',
-          'Choix de matériaux et réalisation de projet',
+          'Matière, grandeurs et unités, masse volumique, densité et relation poids-masse',
+          'Électricité (circuits, intensité, tension) ; lumière (ombres, réflexion et réfraction)',
+          'Mélanges, atomes, molécules, ions, mole et équations-bilans chimiques',
+        ],
+      },
+      {
+        subject: 'SVT',
+        title: 'Digestion, circulation, reproduction, microbes et globe',
+        objectif: 'Comprendre physiologie humaine, hérédité et géodynamique en 13 leçons.',
+        notions: [
+          'Ressources naturelles, digestion, sang, circulation, pression artérielle et santé cardiovasculaire',
+          'Puberté, fécondation, contraception, transmission héréditaire et contamination microbienne',
+          'Volcanisme, roches magmatiques, séismes et structure du globe terrestre',
         ],
       },
       {
         subject: 'Éducation civique',
         title: 'Institutions, égalité, paix et environnement',
-        objectif: 'Comprendre la citoyenneté et les droits et devoirs.',
+        objectif: 'Comprendre la citoyenneté, les institutions et les droits et devoirs.',
         notions: [
           'Institutions, citoyenneté, droits et devoirs',
           'Égalité, paix et protection de l’environnement',
@@ -874,7 +889,7 @@ function getCollegeSpecs(classLevel: '6e' | '5e' | '4e' | '3e'): SubjectSpec[] {
         objectif: 'Développer autonomie sportive, arbitrage et pratiques artistiques.',
         notions: [
           'Compétences sportives, arbitrage et coopération',
-          'Activités artistiques',
+          'Activités plastiques, musicales et scéniques',
         ],
       },
     ];
@@ -884,67 +899,70 @@ function getCollegeSpecs(classLevel: '6e' | '5e' | '4e' | '3e'): SubjectSpec[] {
   return [
     {
       subject: 'Français',
-      title: 'Argumentation, théâtre, poésie et résumé (BFEM)',
-      objectif: 'Maîtriser commentaire, rédaction, résumé et analyse grammaticale complète.',
+      title: 'Subordination, œuvre intégrale, résumé, dissertation et commentaire',
+      objectif: 'Maîtriser les 8 leçons clés du programme pour réussir le BFEM.',
       notions: [
-        'Compréhension et interprétation : argumentation, récit, théâtre et poésie',
-        'Grammaire approfondie, orthographe, conjugaison, rédaction et résumé',
-        'Méthodologie des épreuves du BFEM',
-      ],
-    },
-    {
-      subject: 'Anglais',
-      title: 'Compréhension de documents et argumentation écrite/orale',
-      objectif: 'Consolider grammaire et lexique pour communiquer avec aisance.',
-      notions: [
-        'Compréhension de documents et expression suivie',
-        'Récit, opinion, argumentation et situations de communication',
+        'Phrase simple et complexe, subordination, modes/temps du verbe, accords et lexique',
+        'Lecture d’une œuvre intégrale (Une si longue lettre de Mariama Bâ)',
+        'Méthodes des épreuves : résumé et discussion, dissertation et commentaire composé',
       ],
     },
     {
       subject: 'Mathématiques',
-      title: 'Racines carrées, Thalès, trigonométrie et fonctions',
-      objectif: 'Résoudre équations/systèmes et mobiliser géométrie et probabilités.',
+      title: 'Radicaux, systèmes, Thalès, trigonométrie, vecteurs et espace',
+      objectif: 'Maîtriser les 13 leçons officielles du programme de mathématiques.',
       notions: [
-        'Racines carrées, calcul littéral, équations, systèmes, fonctions et proportionnalité',
-        'Théorème de Thalès, Pythagore, trigonométrie et géométrie dans l’espace',
-        'Statistiques, probabilités et dénombrement',
+        'Racine carrée, applications affines, équations, inéquations et systèmes à deux inconnues',
+        'Statistiques, théorème de Thalès, trigonométrie dans le triangle rectangle et angle inscrit',
+        'Vecteurs, transformations du plan, repérage et géométrie dans l’espace',
       ],
     },
     {
       subject: 'Histoire',
-      title: 'Colonisation, résistances, guerres et indépendances',
-      objectif: 'Comprendre la période contemporaine et la construction des États.',
+      title: 'Impérialisme, guerres mondiales, indépendances et monde depuis 1945',
+      objectif: 'Maîtriser les 22 leçons d’histoire contemporaine africaine et mondiale.',
       notions: [
-        'Périodes modernes et contemporaines, colonisation et résistances',
-        'Guerres mondiales, indépendances et construction des États africains et du Sénégal',
+        'Capitalisme, explorations, conférence de Berlin, résistances africaines et systèmes coloniaux',
+        'Révolutions, guerres mondiales, crise de 1929 et éveil des nationalismes',
+        'Décolonisation en Afrique et au Sénégal, guerre froide, construction européenne et Proche-Orient',
       ],
     },
     {
       subject: 'Géographie',
-      title: 'Espaces, urbanisation et enjeux du développement',
-      objectif: 'Analyser économie, population et ressources du Sénégal, de l’Afrique et du monde.',
+      title: 'Système-monde, pôles économiques et défis de développement',
+      objectif: 'Analyser les grands pôles économiques et l’émergence en 20 leçons.',
       notions: [
-        'Espaces, développement, population et urbanisation',
-        'Économie, ressources et enjeux du Sénégal, de l’Afrique et du monde',
+        'Amérique du Nord et Union européenne : atouts, populations, intégration et puissance',
+        'Asie-Pacifique, Japon, Chine et nouveaux pays industrialisés',
+        'Brésil, Afrique dans la mondialisation, mondialisation et développement durable',
       ],
     },
     {
-      subject: 'SVT / Sciences physiques',
-      title: 'Hérédité, mécanique, électricité et chimie',
-      objectif: 'Expliquer fonctions biologiques et réactions ou lois physiques.',
+      subject: 'Anglais',
+      title: 'Temps, modaux, conditionnels, santé, environnement et citoyens',
+      objectif: 'Consolider grammaire et expression sur les 16 leçons du programme.',
       notions: [
-        'Fonctions biologiques, santé, hérédité et environnement',
-        'Électricité, mécanique, chimie et transformations physiques',
+        'Temps verbaux, modaux, voix passive, conditionnels, discours rapporté et propositions',
+        'Éducation, emploi, santé, environnement, droits, médias, culture et paix',
       ],
     },
     {
-      subject: 'Technologie',
-      title: 'Systèmes, énergie, conception et sécurité technique',
-      objectif: 'Conduire conception, réalisation et maîtrise des règles de sécurité.',
+      subject: 'Physique-Chimie',
+      title: 'Optique, énergie mécanique, électricité et chimie organique/minérale',
+      objectif: 'Maîtriser les 11 leçons de physique et chimie de fin de collège.',
       notions: [
-        'Systèmes, énergie, conception et réalisation',
-        'Sécurité et usages techniques',
+        'Lentilles minces, dispersion de la lumière, forces, travail, puissance et énergie mécanique',
+        'Résistance, loi d’Ohm, puissance électrique, solutions aqueuses, acides, bases, métaux et hydrocarbures',
+      ],
+    },
+    {
+      subject: 'SVT',
+      title: 'Système nerveux, vision, respiration, rein, immunité et géologie',
+      objectif: 'Expliquer fonctions physiologiques, immunologie et roches en 15 leçons.',
+      notions: [
+        'Système nerveux, œil et vision, respiration humaine, cœur/sang, excrétion et rein',
+        'Immunité, défense de l’organisme, infection VIH-sida et vaccination',
+        'Tectonique des plaques, formation des roches métamorphiques, cycle des roches et chronologie',
       ],
     },
     {
@@ -973,95 +991,185 @@ function getLyceeSpecs(
   serie: SerieOption,
 ): SubjectSpec[] {
   if (classLevel === '2nde') {
+    const mathSpec2nde: SubjectSpec =
+      serie === 'Orientation S'
+        ? {
+            subject: 'Mathématiques',
+            title: 'Seconde S : vecteurs, trigonométrie, fonctions et polynômes (15 chapitres)',
+            objectif: 'Acquérir les 15 chapitres de Seconde S en géométrie vectorielle, fonctions et algèbre.',
+            notions: [
+              'Calcul vectoriel, repérage cartésien, produit scalaire et trigonométrie',
+              'Calcul dans ℝ, intervalles, généralités et étude de fonctions numériques',
+              'Équations du 2nd degré, systèmes, polynômes, fractions rationnelles et statistique',
+            ],
+          }
+        : serie === 'Orientation L'
+          ? {
+              subject: 'Mathématiques',
+              title: 'Seconde L : calcul dans ℝ, fonctions affines, systèmes et courbes (8 chapitres)',
+              objectif: 'Maîtriser les 8 chapitres du programme littéraire de Seconde L.',
+              notions: [
+                'Calcul dans ℝ, proportionnalité, fonction affine et droites du plan',
+                'Lectures graphiques et statistique descriptive',
+                'Systèmes à deux inconnues, second degré et tracé de courbes',
+              ],
+            }
+          : serie === 'Orientation STEG'
+            ? {
+                subject: 'Mathématiques',
+                title: 'Seconde STEG : statistique, dénombrement, programmation linéaire et finances (7 chapitres)',
+                objectif: 'Mobiliser les mathématiques appliquées à la gestion et aux sciences économiques.',
+                notions: [
+                  'Calcul, bases de numération, statistique et dénombrement',
+                  'Géométrie analytique, systèmes et programmation linéaire',
+                  'Second degré, fonctions et mathématiques financières',
+                ],
+              }
+            : {
+                subject: 'Mathématiques',
+                title: `Seconde (${serie}) : algèbre, fonctions et géométrie`,
+                objectif: 'Consolider équations, fonctions, repérage vectoriel et statistique.',
+                notions: [
+                  'Calcul dans ℝ, équations, inéquations et systèmes linéaires',
+                  'Fonctions numériques, lectures graphiques et géométrie plane',
+                  'Statistique et résolution de problèmes',
+                ],
+              };
+
+    const physSpec2nde: SubjectSpec =
+      serie === 'Orientation S'
+        ? {
+            subject: 'Sciences physiques',
+            title: 'Physique-chimie Seconde S : électrisation, dipôles, mécanique, optique et solutions (25 leçons)',
+            objectif: 'Maîtriser les 25 leçons expérimentales et quantitatives de Seconde S (5 h/semaine).',
+            notions: [
+              'Électrisation, courant, tension, dipôles passifs/actifs et amplificateur opérationnel',
+              'Mouvement, forces, équilibre d’un solide et optique géométrique',
+              'Atomes, liaisons chimiques, mole, équation-bilan, pH et caractérisation des ions',
+            ],
+          }
+        : serie === 'Orientation L'
+          ? {
+              subject: 'Sciences physiques',
+              title: 'Physique-chimie Seconde L : circuits, mécanique et transformations de la matière (10 leçons)',
+              objectif: 'Acquérir les 10 leçons de culture scientifique de Seconde L (2 h/semaine).',
+              notions: [
+                'Électricité environnementale, circuit électrique, intensité et tension',
+                'Mouvements, vitesse, forces, poids et masse',
+                'Mélanges, corps purs, transformations de la matière et solutions acide/basique',
+              ],
+            }
+          : {
+              subject: 'Sciences physiques',
+              title: `Physique-chimie Seconde (${serie}) : électricité, mécanique et matière`,
+              objectif: 'Maîtriser les mesures expérimentales et lois physiques de base.',
+              notions: [
+                'Circuits électriques, mouvements, forces et équilibre',
+                'Matière, transformations chimiques et solutions aqueuses',
+              ],
+            };
+
+    const svtSpec2nde: SubjectSpec =
+      serie === 'Orientation S'
+        ? {
+            subject: 'SVT',
+            title: 'SVT Seconde S : écosystèmes, ressources, espèce et évolution (10 leçons)',
+            objectif: 'Étudier l’écologie appliquée au Sénégal, la variation des espèces et l’évolution du vivant.',
+            notions: [
+              'Structure, fonctionnement et diversité des écosystèmes au Sénégal',
+              'Gestion des sols, de l’eau, de l’énergie et des espaces rural et urbain',
+              'L’espèce, la variation et l’évolution des êtres vivants',
+            ],
+          }
+        : {
+            subject: 'SVT',
+            title: `SVT Seconde (${serie}) : écosystèmes, sols, eau et espaces (8 leçons)`,
+            objectif: 'Comprendre les écosystèmes du Sénégal et la gestion des ressources naturelles.',
+            notions: [
+              'Structure, fonctionnement et diversité des écosystèmes au Sénégal',
+              'Les sols, l’eau, l’énergie, l’espace rural et l’espace urbain',
+            ],
+          };
+
     const base: SubjectSpec[] = [
       {
         subject: 'Français',
-        title: 'Analyse littéraire, argumentation et commentaire',
-        objectif: 'Maîtriser commentaire de texte, résumé et écriture structurée.',
+        title: `Français Seconde (${serie}) : genres littéraires, mouvements et méthode (21 leçons)`,
+        objectif: 'Maîtriser commentaire de texte, résumé suivi de discussion et fiche de lecture.',
         notions: [
-          'Compréhension et analyse de textes, lecture littéraire et expression orale',
-          'Écriture argumentative, narrative et explicative, résumé ou compte rendu',
-          'Grammaire, vocabulaire, orthographe et méthodes de commentaire',
+          'Genres et types de textes (narratif, descriptif, argumentatif, injonctif, explicatif)',
+          'Courants littéraires : Renaissance, Baroque, Classicisme, Lumières et Négritude',
+          'Figures de style, conte, résumé suivi de discussion et fiche de lecture',
         ],
       },
-      {
-        subject: 'Mathématiques',
-        title: 'Calcul algébrique, fonctions et géométrie',
-        objectif: 'Consolider équations, fonctions, géométrie et probabilités de base.',
-        notions: [
-          'Calcul numérique et algébrique, équations, inéquations et fonctions graphiques',
-          'Géométrie plane et dans l’espace, grandeurs et mesures',
-          'Statistiques, probabilités de base et résolution de problèmes',
-        ],
-      },
+      mathSpec2nde,
       {
         subject: 'Langues vivantes',
-        title: 'Communication, grammaire et compréhension',
-        objectif: 'Renforcer l’expression écrite et orale dans les langues du lycée.',
+        title: `Anglais Seconde (${serie}) : grammaire, expression et société (23 leçons)`,
+        objectif: 'Renforcer la maîtrise grammaticale et l’expression écrite et orale.',
         notions: [
-          'Compréhension orale et écrite, expression et communication',
-          'Vocabulaire, grammaire et options anciennes ou classiques selon l’établissement',
+          'Temps, modaux, conditionnels, voix passive et discours rapporté',
+          'Relatives, gérondif, formation des mots et thèmes de société',
         ],
       },
       {
         subject: 'Histoire-Géographie',
-        title: 'Repères historiques, cartes et documents',
-        objectif: 'Analyser des documents historiques et des cartes géographiques.',
+        title: `Histoire (25 leçons) & Géographie (20 leçons) — Seconde (${serie})`,
+        objectif: 'Analyser l’histoire africaine et mondiale et maîtriser la géographie générale.',
         notions: [
-          'Repères historiques et géographiques fondamentaux',
-          'Lecture critique de documents et de cartes',
-        ],
-      },
-      {
-        subject: 'SVT',
-        title: 'Vivant, santé, environnement et démarche scientifique',
-        objectif: 'Appliquer la démarche expérimentale aux phénomènes biologiques.',
-        notions: [
-          'Vivant, corps humain, santé et environnement',
-          'Démarche scientifique et observation expérimentale',
-        ],
-      },
-      {
-        subject: 'Sciences physiques',
-        title: 'Matière, énergie, mesures et mouvements',
-        objectif: 'Maîtriser mesures expérimentales et lois physiques de base.',
-        notions: [
-          'Matière, énergie et transformations',
-          'Mesures, mouvements et phénomènes physiques étudiés',
+          'Préhistoire, Égypte pharaonique, grands empires ouest-africains, traites et révolutions',
+          'Univers, Terre, océans, climats, tectonique des plaques et reliefs',
         ],
       },
     ];
 
-    if (serie === 'Orientation STEG') {
+    if (serie === 'Orientation S') {
+      base.push(physSpec2nde, svtSpec2nde);
+    } else if (serie === 'Orientation L') {
+      base.push({
+        subject: 'Économie',
+        title: 'Économie Seconde L : comptabilité nationale, agrégats et facteurs (15 leçons)',
+        objectif: 'Comprendre besoins, comptabilité nationale, secteurs institutionnels et facteur travail.',
+        notions: [
+          'Biens, besoins, courants économiques et circuit économique',
+          'Comptabilité nationale, agrégats et tableaux statistiques',
+          'Indicateurs démographiques, activité, facteur travail et capital',
+        ],
+      });
+      base.push(svtSpec2nde, physSpec2nde);
+    } else if (serie === 'Orientation STEG') {
       base.push({
         subject: 'Économie & Gestion',
-        title: 'Initiation à l’économie et aux organisations',
-        objectif: 'Découvrir agents économiques, entreprise et outils de gestion.',
+        title: 'Économie & Gestion Seconde STEG : entreprise, circuit et gestion comptable',
+        objectif: 'Découvrir agents économiques, documents commerciaux et outils comptables.',
         notions: [
-          'Agents économiques, échanges et fonctionnement des organisations',
-          'Introduction aux documents de gestion',
+          'Biens, besoins, circuit économique et secteurs institutionnels',
+          'Organisation de l’entreprise, documents de gestion et indicateurs',
         ],
       });
     } else if (serie === 'Technique (STIDD / F6)') {
-      base.push({
+      base.push(physSpec2nde, {
         subject: 'Sciences et technologies',
-        title: 'Initiation technologique et laboratoire',
-        objectif: 'Préparer les enseignements techniques et chimiques.',
+        title: 'Initiation technologique et pratiques de laboratoire (STIDD / F6)',
+        objectif: 'Préparer les spécialités industrielles ou chimiques de laboratoire.',
         notions: [
           'Analyse de systèmes techniques et conception de base',
-          'Sécurité et pratiques de laboratoire',
+          'Sécurité, mesures et protocoles de laboratoire',
         ],
       });
     } else if (serie === 'Franco-arabe') {
       base.push({
         subject: 'Arabe',
-        title: 'Langue arabe et textes de culture',
+        title: 'Langue arabe et textes de culture (Seconde Franco-arabe)',
         objectif: 'Consolider lecture, grammaire et rédaction en langue arabe.',
         notions: [
           'Compréhension et expression écrite en arabe',
           'Civilisation et disciplines complémentaires du parcours',
         ],
       });
+      base.push(svtSpec2nde, physSpec2nde);
+    } else {
+      base.push(svtSpec2nde, physSpec2nde);
     }
 
     base.push({
@@ -1075,124 +1183,305 @@ function getLyceeSpecs(
 
   // Première (1re) & Terminale — differentiated cleanly by Série and level!
   const isTerm = classLevel === 'Terminale';
+  const lvlLabel = isTerm ? `Terminale ${serie}` : `Première ${serie}`;
 
   const generalFrench: SubjectSpec = {
     subject: 'Français',
     title: isTerm
-      ? 'Littérature, mouvements, dissertation et commentaire'
-      : 'Analyse des genres littéraires et méthodologie écrite',
+      ? `Français ${lvlLabel} : surréalisme, roman, théâtre et épreuves du Bac`
+      : `Français ${lvlLabel} : mouvements littéraires, Négritude et méthode (18 leçons)`,
     objectif: isTerm
-      ? 'Maîtriser les exercices du Baccalauréat : dissertation, commentaire et lecture littéraire.'
-      : 'Approfondir genres littéraires, commentaire composé et expression structurée.',
+      ? `Maîtriser les exercices du Baccalauréat (${serie}) : dissertation, commentaire, résumé et synthèse.`
+      : `Approfondir genres, mouvements littéraires et expression écrite en ${lvlLabel}.`,
     notions: isTerm
       ? [
-          'Compétences de lecture et d’écriture littéraires, genres et mouvements',
-          'Méthodologie complète de la dissertation et du commentaire littéraire',
-          'Préparation intensive aux épreuves écrites et orales',
+          'Surréalisme, poésie, roman (francophone et africain) et théâtre',
+          'Texte argumentatif, lecture d’œuvre intégrale et ressources de style',
+          'Dissertation, commentaire suivi/composé, résumé et synthèse de documents',
         ]
       : [
-          'Analyse des genres littéraires et étude des textes',
-          'Méthode de commentaire, dissertation et rédaction argumentée',
+          'Genres littéraires : roman, poésie, théâtre et essai',
+          'Romantisme, Parnasse, Symbolisme, Réalisme, Naturalisme et Négritude',
+          'Commentaire composé, dissertation, écriture d’invention et résumé',
         ],
   };
 
   const generalPhilo: SubjectSpec = {
     subject: 'Philosophie',
-    title: isTerm ? 'Problématisation, dissertation et commentaire philosophique' : 'Introduction à la réflexion philosophique',
-    objectif: 'Construire une argumentation conceptuelle rigoureuse à partir des grands repères.',
-    notions: [
-      'Analyse de concepts, problématisation et structuration d’une thèse',
-      'Méthodes de la dissertation et du commentaire de texte philosophique',
-    ],
+    title: isTerm
+      ? `Philosophie ${lvlLabel} : réflexion philosophique, société, sciences et esthétique`
+      : `Philosophie ${lvlLabel} : origines, grands courants et méthode (9 leçons)`,
+    objectif: isTerm
+      ? `Construire une problématisation rigoureuse pour la dissertation et le commentaire en ${lvlLabel}.`
+      : 'Découvrir les domaines et grands courants historiques de la philosophie.',
+    notions: isTerm
+      ? [
+          'Réflexion philosophique, philosophie africaine, nature/culture, conscience et liberté',
+          'État et droits, pensée scientifique, vérité, technique et esthétique',
+          'Étude d’œuvres (Descartes, Discours de la méthode), dissertation et explication de texte',
+        ]
+      : [
+          'Qu’est-ce que philosopher ?, domaines de la philosophie et méthodologie',
+          'Mythes, philosophie grecque, Moyen Âge, Temps modernes et philosophies africaines',
+        ],
   };
 
   const generalHG: SubjectSpec = {
     subject: 'Histoire-Géographie',
     title: isTerm
-      ? 'Relations internationales, développement et étude de documents'
-      : 'Mutations contemporaines, cartes et synthèse documentaire',
-    objectif: 'Analyser documents historiques et enjeux géographiques contemporains.',
-    notions: [
-      'Lecture et critique de documents historiques et statistiques',
-      'Cartographie, développement et grands ensembles régionaux',
-    ],
+      ? `Histoire (19 leçons) & Géographie (18 leçons) — ${lvlLabel}`
+      : `Histoire (23 leçons) & Géographie (23 leçons) — ${lvlLabel}`,
+    objectif: isTerm
+      ? 'Maîtriser le monde contemporain, les civilisations et le système-monde.'
+      : 'Analyser impérialisme, guerres mondiales, démographie et dynamiques économiques.',
+    notions: isTerm
+      ? [
+          'Guerre froide, décolonisation, civilisations négro-africaines et monde musulman',
+          'Système-monde, Amérique du Nord, Europe, Asie-Pacifique, Afrique et Sénégal',
+        ]
+      : [
+          'Révolution industrielle, impérialisme, résistances africaines et Sénégal (1914-1945)',
+          'Population mondiale, agriculture, urbanisation, transports et intégration économique',
+        ],
   };
 
   const generalLangues: SubjectSpec = {
     subject: 'Langues vivantes',
-    title: 'Compréhension, expression écrite et orale',
-    objectif: 'Maîtriser les compétences linguistiques et culturelles du cycle terminal.',
-    notions: [
-      'Compréhension de textes authentiques et expression argumentée',
-      'Grammaire consolidée, lexique thématique et traduction',
-    ],
-  };
-
-  const mathS1S3: SubjectSpec = {
-    subject: 'Mathématiques',
     title: isTerm
-      ? 'Complexes, suites, intégrales, équations différentielles et probabilités'
-      : 'Algèbre, analyse des fonctions, géométrie et dénombrement',
-    objectif: isTerm
-      ? 'Maîtriser le programme complet d’analyse, d’algèbre et de géométrie pour l’épreuve scientifique.'
-      : 'Acquérir dérivation, suites, trigonométrie et géométrie vectorielle.',
+      ? `Anglais ${lvlLabel} : grammaire consolidée et thèmes d’étude (23 leçons)`
+      : `Anglais ${lvlLabel} : maîtrise grammaticale et thèmes de société (35 leçons)`,
+    objectif: `Maîtriser compréhension, grammaire et expression écrite en ${lvlLabel}.`,
     notions: isTerm
       ? [
-          'Nombres complexes, systèmes linéaires et arithmétique',
-          'Suites, fonctions, calcul intégral et équations différentielles',
-          'Géométrie plane et de l’espace, courbes et probabilités',
+          'Temps, modaux, passif, discours indirect, conditionnels et relatives',
+          'Emploi, économie, santé, environnement, patrimoine, sciences et éducation',
         ]
       : [
-          'Polynômes, équations, inéquations et systèmes',
-          'Fonctions numériques, limites et dérivation',
-          'Suites, géométrie plane et probabilités',
+          'Présent, passé, futur, passif, modaux, comparatifs et discours rapporté',
+          'Métiers, loisirs, économie, environnement, patrimoine et médias',
         ],
   };
 
-  const physS1S2: SubjectSpec = {
-    subject: 'Sciences physiques',
-    title: isTerm
-      ? 'Cinématique, dynamique, gravitation, électromagnétisme et électricité'
-      : 'Mécanique, énergie, circuits électriques et chimie organique',
-    objectif: isTerm
-      ? 'Modéliser les phénomènes mécaniques, électriques et chimiques du programme officiel.'
-      : 'Établir les lois de conservation et la démarche expérimentale.',
-    notions: isTerm
-      ? [
-          'Cinématique, dynamique et gravitation',
-          'Électromagnétisme et électricité',
-          'Cinétique chimique, solutions aqueuses et chimie organique',
-        ]
-      : [
-          'Travail, énergie mécanique et champs électriques',
-          'Chimie des solutions et réactions d’oxydoréduction',
-        ],
+  const buildMathSpec = (): SubjectSpec => {
+    if (serie === 'S1' || serie === 'S3') {
+      return {
+        subject: 'Mathématiques',
+        title: isTerm
+          ? `Mathématiques ${lvlLabel} : complexes, arithmétique, intégrales et géométrie (14 chapitres)`
+          : `Mathématiques ${lvlLabel} : algèbre, analyse, barycentre et trigonométrie (7 h/semaine)`,
+        objectif: isTerm
+          ? `Maîtriser les 14 chapitres scientifiques de ${lvlLabel} pour le Baccalauréat.`
+          : `Approfondir analyse, géométrie vectorielle et probabilités en ${lvlLabel}.`,
+        notions: isTerm
+          ? [
+              'Probabilités conditionnelles, variables aléatoires, complexes et arithmétique (PGCD, congruences)',
+              'Suites, limites, dérivation, ln, exp, puissances, intégrales et équations différentielles',
+              'Barycentres, isométries, similitudes, géométrie dans l’espace, courbes paramétrées et coniques',
+            ]
+          : [
+              'Polynômes, systèmes, calcul vectoriel, barycentre, produit scalaire et trigonométrie',
+              'Fonctions numériques, limites, dérivation, suites, dénombrement et statistique',
+            ],
+      };
+    }
+
+    if (serie === 'S2' || serie === 'S4' || serie === 'S5') {
+      return {
+        subject: 'Mathématiques',
+        title: isTerm
+          ? `Mathématiques ${lvlLabel} : analyse, suites, intégrales, complexes et probabilités`
+          : `Mathématiques ${lvlLabel} : fonctions, trigonométrie, suites et probabilités`,
+        objectif: isTerm
+          ? `Maîtriser l’analyse, les nombres complexes et les probabilités du programme officiel de ${lvlLabel}.`
+          : `Consolider fonctions, dérivation, suites et dénombrement en ${lvlLabel}.`,
+        notions: isTerm
+          ? [
+              'Fonctions, dérivées, primitives, logarithme népérien et exponentielle',
+              'Suites numériques, calcul intégral et équations différentielles',
+              'Nombres complexes (applications géométriques), variables aléatoires et probabilités',
+            ]
+          : [
+              'Équations, systèmes, barycentre, produit scalaire et trigonométrie',
+              'Fonctions, dérivation, suites numériques, statistique et dénombrement',
+            ],
+      };
+    }
+
+    if (serie === 'L1a/L1b' || serie === 'L’1' || serie === 'L2') {
+      return {
+        subject: 'Mathématiques',
+        title: isTerm
+          ? `Mathématiques ${lvlLabel} : polynômes, probabilités, ln, exp, suites et intégrales (13 chapitres)`
+          : `Mathématiques ${lvlLabel} : fonctions, dérivation, suites et dénombrement (13 chapitres · 3 h/sem)`,
+        objectif: `Maîtriser les 13 chapitres du programme littéraire de ${lvlLabel}.`,
+        notions: isTerm
+          ? [
+              'Applications, factorisation de polynômes, dénombrement, probabilités et ajustement linéaire',
+              'Limites, continuité, dérivation, étude de fonctions et résolution d’équations',
+              'Logarithme népérien, fonction exponentielle, suites et calcul intégral',
+            ]
+          : [
+              'Systèmes d’équations, polynômes, limites, continuité et dérivabilité',
+              'Étude de fonctions polynômes, homographiques et réciproques (x², √x)',
+              'Suites arithmétiques et géométriques, statistiques à deux variables et dénombrement',
+            ],
+      };
+    }
+
+    return {
+      subject: 'Mathématiques',
+      title: `Mathématiques ${lvlLabel} : analyse, suites et probabilités`,
+      objectif: `Maîtriser les outils mathématiques attendus en ${lvlLabel}.`,
+      notions: [
+        'Analyse des fonctions, suites numériques et calcul différentiel/intégral',
+        'Statistiques, dénombrement et probabilités',
+      ],
+    };
   };
 
-  const svtSpec: SubjectSpec = {
-    subject: 'SVT',
-    title: isTerm
-      ? 'Système nerveux, activité cardiaque, glycémie, immunologie et reproduction'
-      : 'Cellule, métabolisme, génétique et géologie',
-    objectif: 'Expliquer les régulations physiologiques, l’immunité et la transmission génétique.',
-    notions: isTerm
-      ? [
-          'Système nerveux et activité cardiaque',
-          'Régulation de la glycémie et immunologie',
-          'Reproduction et génétique',
-        ]
-      : [
-          'Organisation cellulaire, métabolisme et division cellulaire',
-          'Génétique fondamentale et phénomènes géologiques',
-        ],
+  const buildPhysSpec = (): SubjectSpec => {
+    if (serie === 'L2') {
+      return {
+        subject: 'Sciences physiques',
+        title: isTerm
+          ? 'Physique-Chimie Terminale L2 : énergie, ondes, lumière et chimie quotidienne (5+5 chapitres)'
+          : 'Physique-Chimie Première L2 : chute libre, énergie, lentilles, organique et redox',
+        objectif: isTerm
+          ? 'Maîtriser les 5 chapitres de physique et 5 chapitres de chimie du programme de Terminale L2.'
+          : 'Comprendre énergie mécanique, optique, chimie organique et pile Daniell en Première L2.',
+        notions: isTerm
+          ? [
+              'Physique (5 chap.) : énergie électrique et nucléaire, signaux, ondes mécaniques et lumière',
+              'Chimie (5 chap.) : matières plastiques et textiles, savons, lessives, pollution de l’air et de l’eau',
+            ]
+          : [
+              'Chute libre, travail, puissance, énergies cinétique/mécanique et lentilles',
+              'Chimie organique (alcanes, chaînes insaturées, composés oxygénés), oxydoréduction et pile Daniell',
+            ],
+      };
+    }
+
+    if (serie === 'S1' || serie === 'S2' || serie === 'S3' || serie === 'F6') {
+      return {
+        subject: 'Sciences physiques',
+        title: isTerm
+          ? `Physique-Chimie ${lvlLabel} : mécanique, électromagnétisme, optique et solutions (15+9 chapitres)`
+          : `Physique-Chimie ${lvlLabel} : énergie, champs, ondes, chimie organique et électrochimie`,
+        objectif: isTerm
+          ? `Maîtriser les 15 chapitres de physique et 9 chapitres de chimie de ${lvlLabel}.`
+          : `Établir les lois d’énergie, d’électrostatique, d’optique et de chimie en ${lvlLabel}.`,
+        notions: isTerm
+          ? [
+              'Cinématique, dynamique, gravitation, champs magnétiques, Laplace, dipôles RL/RC et oscillations',
+              'Interférences lumineuses, effet photoélectrique, atome et réactions nucléaires',
+              'Alcools, amines, acides carboxyliques, cinétique, pH, acides/bases, effet tampon et stéréochimie',
+            ]
+          : [
+              'Énergie, champs, condensateurs, électronique, phénomènes vibratoires, ondes et optique',
+              'Chimie organique et électrochimie',
+            ],
+      };
+    }
+
+    return {
+      subject: 'Sciences physiques',
+      title: `Physique-Chimie ${lvlLabel} : mécanique, électricité et chimie appliquée`,
+      objectif: `Maîtriser les bases physiques et chimiques utiles en ${lvlLabel}.`,
+      notions: [
+        'Mécanique, énergie électrique et phénomènes ondulatoires ou optiques',
+        'Solutions aqueuses, cinétique et réactions chimiques',
+      ],
+    };
   };
+
+  const buildSvtSpec = (): SubjectSpec => {
+    if (serie === 'S2') {
+      return {
+        subject: 'SVT',
+        title: isTerm
+          ? 'SVT Terminale S2 : neurophysiologie, milieu intérieur, immunologie, génétique et biotechnologies (30 leçons)'
+          : 'SVT Première S2 : cellule, nutrition, respiration, génétique et géologie du Sénégal',
+        objectif: isTerm
+          ? 'Maîtriser l’intégralité des 30 leçons du programme officiel de Terminale S2.'
+          : 'Comprendre la cellule, le métabolisme énergétique et la géologie en Première S2.',
+        notions: isTerm
+          ? [
+              'Système nerveux, tissu nerveux, muscle strié, activité cardiaque et pression artérielle',
+              'Étude du milieu intérieur, régulation de la glycémie et immunologie',
+              'Reproduction des mammifères et spermaphytes, génétique, hérédité et biotechnologies',
+            ]
+          : [
+              'Organisation cellulaire, échanges, synthèse des protéines et division cellulaire',
+              'Digestion, nutrition humaine, respiration, fermentation et géologie du Sénégal',
+            ],
+      };
+    }
+
+    if (serie === 'S1') {
+      return {
+        subject: 'SVT',
+        title: isTerm
+          ? 'SVT Terminale S1 : physiologie nerveuse, cardiaque, glycémie, immunologie et génétique (19 leçons)'
+          : 'SVT Première S1 : biologie cellulaire, énergétique et géologie',
+        objectif: isTerm
+          ? 'Maîtriser les 19 leçons du programme officiel de SVT en Terminale S1.'
+          : 'Acquérir les bases de biologie cellulaire, nutrition et géologie de Première S1.',
+        notions: isTerm
+          ? [
+              'Système nerveux, muscle strié, activité cardiaque et pression artérielle',
+              'Régulation de la glycémie et défense immunitaire',
+              'Reproduction chez les mammifères, génétique et hérédité humaine',
+            ]
+          : [
+              'Cellule, synthèse des protéines, division cellulaire et métabolisme énergétique',
+              'Nutrition humaine et ressources géologiques du Sénégal',
+            ],
+      };
+    }
+
+    if (serie === 'L2') {
+      return {
+        subject: 'SVT',
+        title: isTerm
+          ? 'SVT Terminale L2 : système nerveux, cœur, glycémie, immunité et hérédité (11 leçons)'
+          : 'SVT Première L2 : cellule, protéines, digestion et géologie',
+        objectif: isTerm
+          ? 'Maîtriser les 11 leçons du programme officiel de SVT en Terminale L2.'
+          : 'Comprendre le fonctionnement cellulaire, la nutrition humaine et la géologie en Première L2.',
+        notions: isTerm
+          ? [
+              'Organisation du système nerveux, muscle strié et activité cardiaque',
+              'Régulation de la glycémie et immunologie',
+              'Hérédité humaine et grands enjeux biologiques',
+            ]
+          : [
+              'Cellule, synthèse des protéines et division cellulaire',
+              'Digestion, besoins alimentaires et géologie du Sénégal',
+            ],
+      };
+    }
+
+    return {
+      subject: 'SVT',
+      title: `SVT ${lvlLabel} : physiologie, immunologie, reproduction et génétique`,
+      objectif: `Relier fonctions biologiques et enjeux environnementaux en ${lvlLabel}.`,
+      notions: [
+        'Système nerveux, activité musculaire et régulation physiologique',
+        'Immunologie, reproduction et transmission génétique',
+      ],
+    };
+  };
+
+  const mathSpec = buildMathSpec();
+  const physSpec = buildPhysSpec();
+  const svtSpec = buildSvtSpec();
 
   if (serie === 'S1' || serie === 'S3') {
-    const specs = [mathS1S3, physS1S2];
+    const specs: SubjectSpec[] = [mathSpec, physSpec];
     if (serie === 'S3') {
       specs.push({
         subject: 'Sciences et technologies de l’ingénieur',
-        title: 'Systèmes techniques, mécanique appliquée et conception',
+        title: `Sciences de l’ingénieur (${lvlLabel}) : systèmes techniques et conception`,
         objectif: 'Analyser et dimensionner des systèmes industriels et techniques.',
         notions: [
           'Analyse fonctionnelle et structurelle des systèmes',
@@ -1209,7 +1498,7 @@ function getLyceeSpecs(
   }
 
   if (serie === 'S2') {
-    const specs = [svtSpec, physS1S2, mathS1S3, generalFrench];
+    const specs = [svtSpec, physSpec, mathSpec, generalFrench];
     if (isTerm) specs.push(generalPhilo);
     specs.push(generalLangues, generalHG);
     return specs;
@@ -1221,8 +1510,8 @@ function getLyceeSpecs(
         subject: serie === 'S4' ? 'Agriculture et environnement' : 'Productions et transformations agroalimentaires',
         title:
           serie === 'S4'
-            ? 'Sciences agronomiques, sols, eau et gestion des ressources'
-            : 'Procédés agroalimentaires, conservation et qualité des produits',
+            ? `Sciences agronomiques (${lvlLabel}) : sols, eau et écosystèmes`
+            : `Génie agroalimentaire (${lvlLabel}) : transformation, conservation et qualité`,
         objectif:
           serie === 'S4'
             ? 'Relier sciences biologiques, productions agricoles et protection des écosystèmes.'
@@ -1239,8 +1528,8 @@ function getLyceeSpecs(
               ],
       },
       svtSpec,
-      physS1S2,
-      mathS1S3,
+      physSpec,
+      mathSpec,
       generalFrench,
     ];
     if (isTerm) specs.push(generalPhilo);
@@ -1252,7 +1541,7 @@ function getLyceeSpecs(
     const specs: SubjectSpec[] = [
       {
         subject: 'Économie',
-        title: 'Croissance, marché, échanges et politiques économiques',
+        title: `Économie ${lvlLabel} : croissance, marché, échanges et politiques économiques`,
         objectif: 'Analyser les mécanismes macroéconomiques et les documents statistiques.',
         notions: [
           'Circuit économique, croissance, monnaie et financement',
@@ -1261,7 +1550,7 @@ function getLyceeSpecs(
       },
       {
         subject: 'Gestion',
-        title: 'Organisation, stratégie et outils de gestion commerciale',
+        title: `Gestion ${lvlLabel} : organisation, stratégie et gestion commerciale`,
         objectif: 'Résoudre des études de cas de gestion administrative et commerciale.',
         notions: [
           'Organisation de l’entreprise, gestion commerciale et ressources',
@@ -1270,20 +1559,20 @@ function getLyceeSpecs(
       },
       {
         subject: 'Comptabilité',
-        title: 'Bilan, opérations courantes, coûts et analyse financière',
+        title: `Comptabilité ${lvlLabel} : opérations courantes, coûts et analyse financière`,
         objectif: 'Enregistrer les opérations comptables et analyser la rentabilité.',
         notions: [
-          'Enregistrement des opérations courantes et travaux d’inventaire',
-          'Bilan, compte de résultat, coûts complets et analyse financière',
+          'Opérations courantes, TVA et travaux d’inventaire',
+          'Comptabilité analytique, compte de résultat et bilan fonctionnel',
         ],
       },
       {
         subject: 'Méthodes quantitatives / Mathématiques',
-        title: 'Statistiques, suites, probabilités et calcul financier',
+        title: `Méthodes quantitatives ${lvlLabel} : statistiques, suites, probabilités et calcul financier`,
         objectif: 'Appliquer les outils mathématiques aux données économiques et de gestion.',
         notions: [
           'Suites, fonctions appliquées et mathématiques financières',
-          'Statistiques à une et deux variables, probabilités',
+          'Statistiques à une et deux variables, ajustement et probabilités',
         ],
       },
       generalFrench,
@@ -1297,7 +1586,7 @@ function getLyceeSpecs(
     const specs: SubjectSpec[] = [
       {
         subject: 'Technologie industrielle & Conception',
-        title: 'Systèmes industriels, conception durable et réalisation',
+        title: `Technologie industrielle ${lvlLabel} : systèmes, conception et réalisation`,
         objectif: 'Concevoir, modéliser et vérifier des solutions techniques industrielles.',
         notions: [
           'Conception, fabrication ou électrotechnique selon l’option',
@@ -1306,14 +1595,14 @@ function getLyceeSpecs(
       },
       {
         subject: 'Physique appliquée',
-        title: 'Électrotechnique, énergie, mécanique et transferts',
+        title: `Physique appliquée ${lvlLabel} : électrotechnique, énergie et mécanique`,
         objectif: 'Appliquer les lois de la physique aux systèmes technologiques.',
         notions: [
           'Électricité industrielle, conversion d’énergie et mécanique',
           'Mesures, capteurs et rendement énergétique',
         ],
       },
-      mathS1S3,
+      mathSpec,
       generalFrench,
       generalLangues,
     ];
@@ -1325,15 +1614,15 @@ function getLyceeSpecs(
     const specs: SubjectSpec[] = [
       {
         subject: 'Chimie & Techniques de laboratoire',
-        title: 'Chimie analytique, synthèses et protocoles de laboratoire',
+        title: `Chimie & Laboratoire ${lvlLabel} : chimie analytique et synthèses`,
         objectif: 'Conduire dosages, analyses et synthèses en respectant la sécurité.',
         notions: [
           'Chimie minérale, organique et analytique',
           'Techniques expérimentales, dosages et contrôle en laboratoire',
         ],
       },
-      physS1S2,
-      mathS1S3,
+      physSpec,
+      mathSpec,
       generalFrench,
       generalLangues,
     ];
@@ -1345,7 +1634,7 @@ function getLyceeSpecs(
     const specs: SubjectSpec[] = [
       {
         subject: 'Arabe',
-        title: 'Littérature, grammaire et expression en langue arabe',
+        title: `Arabe ${lvlLabel} : littérature, grammaire et expression écrite`,
         objectif: 'Maîtriser l’analyse de textes et la rédaction structurée en arabe.',
         notions: [
           'Étude de textes littéraires et contemporains en arabe',
@@ -1354,7 +1643,7 @@ function getLyceeSpecs(
       },
       {
         subject: 'Instruction islamique',
-        title: 'Textes de référence, valeurs et civilisation',
+        title: `Instruction islamique ${lvlLabel} : textes de référence, valeurs et civilisation`,
         objectif: 'Approfondir la compréhension des sources et de l’éthique.',
         notions: [
           'Étude des textes fondamentaux et principes éthiques',
@@ -1365,12 +1654,7 @@ function getLyceeSpecs(
       generalHG,
     ];
     if (isTerm) specs.push(generalPhilo);
-    specs.push({
-      subject: 'Mathématiques',
-      title: 'Outils mathématiques du programme général',
-      objectif: 'Mobiliser fonctions, suites et probabilités.',
-      notions: ['Fonctions, suites et statistiques', 'Résolution de problèmes'],
-    });
+    specs.push(mathSpec);
     return specs;
   }
 
@@ -1380,7 +1664,7 @@ function getLyceeSpecs(
   if (serie === 'L1a/L1b') {
     specs.push({
       subject: 'Langues anciennes (Grec / Latin)',
-      title: 'Version, commentaire et civilisation antique',
+      title: `Langues anciennes ${lvlLabel} : version, commentaire et civilisation antique`,
       objectif: 'Traduire et interpréter des textes grecs ou latins selon l’option.',
       notions: [
         'Morphologie, syntaxe et traduction de textes classiques',
@@ -1390,17 +1674,25 @@ function getLyceeSpecs(
   }
   specs.push(generalLangues, generalHG);
   if (serie === 'L2') {
-    specs.push(svtSpec);
+    specs.push({
+      subject: 'Économie',
+      title: isTerm
+        ? 'Économie Terminale L2 : croissance, échange international, développement et monnaie'
+        : 'Économie Première L2 : valeur, marché, consommation, investissement et monnaie (25 leçons)',
+      objectif: 'Analyser les mécanismes économiques, tableaux statistiques et questions d’analyse.',
+      notions: isTerm
+        ? [
+            'Croissance, développement, échanges internationaux et politiques économiques',
+            'Monnaie, financement et étude de textes et tableaux statistiques',
+          ]
+        : [
+            'Valeur, prix d’équilibre, marché, coûts du producteur et élasticité-revenu',
+            'Épargne, investissement, monnaie, crédit et zone franc',
+          ],
+    });
+    specs.push(svtSpec, physSpec);
   }
-  specs.push({
-    subject: 'Mathématiques',
-    title: 'Statistiques, fonctions et probabilités',
-    objectif: 'Maîtriser l’analyse quantitative et la résolution de problèmes.',
-    notions: [
-      'Fonctions numériques et suites',
-      'Statistiques, dénombrement et probabilités',
-    ],
-  });
+  specs.push(mathSpec);
   return specs;
 }
 
@@ -1468,7 +1760,7 @@ export function getClassExperience(
   const difficulties: DifficultyLevel[] = ['Découverte', 'Entraînement', 'Défi'];
 
   const exercises: ExerciseModuleItem[] = specs.map((spec, index) => ({
-    id: `${classLevel}-ex-${index}`,
+    id: `${classLevel}-${validSerie ?? 'std'}-ex-${index}`,
     category: categories[index % categories.length],
     subject: spec.subject,
     lessonTitle: spec.title,

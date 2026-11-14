@@ -1,3 +1,4 @@
+import type { CustomTileBlock, CustomTileTheme } from './customTile';
 import { FormatIndex } from './wireframeState';
 
 export type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
@@ -12,6 +13,9 @@ export interface TileRect {
   isCustom?: boolean;
   title?: string;
   note?: string;
+  subject?: string;
+  theme?: CustomTileTheme;
+  blocks?: CustomTileBlock[];
 }
 
 export interface ResizeBoundsOptions {
@@ -485,6 +489,7 @@ export function computeCanvasHeightPx(
 export function createCustomTile(
   existingTiles: readonly TileRect[],
   customIndex: number,
+  subject?: string,
 ): TileRect {
   const maxZ = existingTiles.reduce((m, t) => Math.max(m, t.z ?? 1), 1);
   const maxBottom = existingTiles.reduce((m, t) => Math.max(m, t.y + t.h), 100);
@@ -501,6 +506,15 @@ export function createCustomTile(
     isCustom: true,
     title: `Carreau ${customIndex + 1}`,
     note: '',
+    ...(subject ? { subject } : {}),
+    theme: 'default',
+    blocks: [
+      {
+        id: `blk-${Date.now().toString(36)}-${customIndex}`,
+        type: 'text',
+        text: '',
+      },
+    ],
   };
 }
 

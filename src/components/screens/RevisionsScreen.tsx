@@ -1,14 +1,22 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
+import {
+  CustomVerbatimCourse,
+  formatCourseDocumentAsPlainText,
+  getPdfCourseDocument,
+} from '../../data/pdfCourses';
 import { ClassExperience } from '../../data/studyData';
 import {
   generateTutorFlashcards,
   generateTutorQuiz,
+  requestLessonExplanation,
+  requestRevisionPlan,
 } from '../../services/tutorClient';
 import { TileRect } from '../../utils/bentoLayout';
 import {
   GeneratedFlashcard,
   GeneratedQuizQuestion,
+  GeneratedRevisionPlan,
   getSubjectTutor,
   NoveltyAnalysisResult,
 } from '../../utils/tutorAgent';
@@ -18,27 +26,43 @@ export type RevisionTab = 'Quiz' | 'Flashcards' | 'Résumé' | 'Planning';
 
 interface RevisionsScreenProps {
   experience: ClassExperience;
+  selectedSubject?: string;
+  customCourses?: CustomVerbatimCourse[];
   tiles: TileRect[];
   baseHeightPx?: number;
   locked?: boolean;
   requestedTab?: RevisionTab | null;
+  pendingAiTrigger?: 'quiz' | 'flashcards' | null;
+  openTileId?: string | null;
+  onSelectOpenTileId?: (tileId: string | null) => void;
+  onOpenTilePage?: (tile: TileRect) => void;
+  onOpenTutor?: () => void;
   onClearRequestedTab?: () => void;
+  onClearPendingAiTrigger?: () => void;
   onSubjectChange?: (subject: string) => void;
   onAnalyzeTile?: (tile: TileRect) => Promise<NoveltyAnalysisResult>;
   onChangeTiles: (next: TileRect[]) => void;
   onBringToFront: (tileId: string) => void;
-  onOpenFullCourse: () => void;
+  onOpenFullCourse: (subject?: string) => void;
 }
 
 const TABS: RevisionTab[] = ['Quiz', 'Flashcards', 'Résumé', 'Planning'];
 
 export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
   experience,
+  selectedSubject,
+  customCourses = [],
   tiles,
   baseHeightPx,
   locked = false,
   requestedTab = null,
+  pendingAiTrigger = null,
+  openTileId = null,
+  onSelectOpenTileId,
+  onOpenTilePage,
+  onOpenTutor,
   onClearRequestedTab,
+  onClearPendingAiTrigger,
   onSubjectChange,
   onAnalyzeTile,
   onChangeTiles,
@@ -49,7 +73,14 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
 
   const [activeTab, setActiveTab] = useState<RevisionTab>('Quiz');
   const [lessonSearch, setLessonSearch] = useState('');
-  const [selectedLessonId, setSelectedLessonId] = useState(lessons[0]?.id ?? '');
+  const [selectedLessonId, setSelectedLessonId] = useState(
+    () =>
+      (selectedSubject
+        ? lessons.find((l) => l.subject === selectedSubject)?.id
+        : undefined) ??
+      lessons[0]?.id ??
+      '',
+  );
 
   // Quiz state
   const [quizStarted, setQuizStarted] = useState(false);
@@ -98,6 +129,18 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
     cards: [],
   });
 
+  const [aiPlan, setAiPlan] = useState<{
+    loading: boolean;
+    error?: string;
+    data?: GeneratedRevisionPlan;
+  }>({ loading: false });
+
+  const [aiExplain, setAiExplain] = useState<{
+    loading: boolean;
+    error?: string;
+    data?: { explanation: string; example: string; quickCheck: string };
+  }>({ loading: false });
+
   useEffect(() => {
     if (requestedTab) {
       setActiveTab(requestedTab);
@@ -106,7 +149,19 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
   }, [requestedTab, onClearRequestedTab]);
 
   useEffect(() => {
-    setSelectedLessonId(lessons[0]?.id ?? '');
+    const matched = selectedSubject
+      ? lessons.find((l) => l.subject === selectedSubject)
+      : undefined;
+    if (matched) {
+      setSelectedLessonId(matched.id);
+    }
+  }, [selectedSubject, lessons]);
+
+  useEffect(() => {
+    const matched = selectedSubject
+      ? lessons.find((l) => l.subject === selectedSubject)
+      : undefined;
+    setSelectedLessonId(matched?.id ?? lessons[0]?.id ?? '');
     setLessonSearch('');
     setQuizStarted(false);
     setQuizIdx(0);
@@ -129,6 +184,8 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
       done: false,
     });
     setAiFlashcards({ loading: false, cards: [] });
+    setAiPlan({ loading: false });
+    setAiExplain({ loading: false });
   }, [experience.classLevel, experience.serie, lessons, subjects]);
 
   const filteredLessons = useMemo(() => {
@@ -158,8 +215,33 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
     aiFlashcards.cards.length > 0 ? aiFlashcards.cards : baseFlashcards;
   const activeCard = flashcards[cardIdx % Math.max(1, flashcards.length)];
 
-  const handleGenerateAiQuiz = async () => {
-    if (!activeLesson || aiQuiz.loading) return;
+  const resolveCourseText = useCallback(
+    (lesson: typeof activeLesson) => {
+      if (!lesson) return '';
+      const customMatch = customCourses.find(
+        (c) =>
+          c.classLevel === experience.classLevel &&
+          (c.serie ?? null) === (experience.serie ?? null) &&
+          c.subject === lesson.subject,
+      );
+      if (customMatch) {
+        return `${customMatch.title}\n\n${customMatch.content}`;
+      }
+      const doc = getPdfCourseDocument({
+        classLevel: experience.classLevel,
+        serie: experience.serie,
+        subject: lesson.subject,
+        fallbackTitle: lesson.title,
+        fallbackObjectif: lesson.objectif,
+        fallbackNotions: lesson.notions,
+      });
+      return formatCourseDocumentAsPlainText(doc);
+    },
+    [customCourses, experience.classLevel, experience.serie],
+  );
+
+  const handleGenerateAiQuiz = useCallback(async () => {
+    if (!activeLesson) return;
     setActiveTab('Quiz');
     setAiQuiz((prev) => ({ ...prev, loading: true, error: undefined }));
     try {
@@ -171,6 +253,7 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
         lessonTitle: activeLesson.title,
         objectif: activeLesson.objectif,
         notions: activeLesson.notions,
+        courseContent: resolveCourseText(activeLesson),
         count: 4,
       });
       setAiQuiz({
@@ -188,10 +271,16 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
         error: err instanceof Error ? err.message : 'Génération du quiz indisponible.',
       }));
     }
-  };
+  }, [
+    activeLesson,
+    experience.classLevel,
+    experience.serie,
+    lessonTutor.name,
+    resolveCourseText,
+  ]);
 
-  const handleGenerateAiFlashcards = async () => {
-    if (!activeLesson || aiFlashcards.loading) return;
+  const handleGenerateAiFlashcards = useCallback(async () => {
+    if (!activeLesson) return;
     setActiveTab('Flashcards');
     setAiFlashcards((prev) => ({ ...prev, loading: true, error: undefined }));
     try {
@@ -203,6 +292,7 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
         lessonTitle: activeLesson.title,
         objectif: activeLesson.objectif,
         notions: activeLesson.notions,
+        courseContent: resolveCourseText(activeLesson),
         count: 5,
       });
       setAiFlashcards({ loading: false, cards });
@@ -217,7 +307,75 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
           err instanceof Error ? err.message : 'Génération des flashcards indisponible.',
       }));
     }
+  }, [
+    activeLesson,
+    experience.classLevel,
+    experience.serie,
+    lessonTutor.name,
+    resolveCourseText,
+  ]);
+
+  const handleGenerateAiPlan = async () => {
+    if (aiPlan.loading) return;
+    setAiPlan({ loading: true });
+    try {
+      const data = await requestRevisionPlan({
+        tutorName: lessonTutor.name,
+        subject: activeLesson?.subject ?? subjects[0] ?? 'Programme général',
+        classLevel: experience.classLevel,
+        serie: experience.serie,
+        selectedSubjects: planSubjects,
+        availableDays,
+        timePerDay,
+      });
+      setPlanningCreated(true);
+      setEditingPlanning(false);
+      setAiPlan({ loading: false, data });
+    } catch (err) {
+      setAiPlan({
+        loading: false,
+        error: err instanceof Error ? err.message : 'Planning indisponible.',
+      });
+    }
   };
+
+  const handleExplainSummary = async () => {
+    if (!activeLesson || aiExplain.loading) return;
+    setAiExplain({ loading: true });
+    try {
+      const data = await requestLessonExplanation({
+        tutorName: lessonTutor.name,
+        subject: activeLesson.subject,
+        classLevel: experience.classLevel,
+        serie: experience.serie,
+        lessonTitle: activeLesson.title,
+        objectif: activeLesson.objectif,
+        notions: activeLesson.notions,
+        courseContent: resolveCourseText(activeLesson),
+      });
+      setAiExplain({ loading: false, data });
+    } catch (err) {
+      setAiExplain({
+        loading: false,
+        error: err instanceof Error ? err.message : 'Explication indisponible.',
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (pendingAiTrigger === 'quiz') {
+      onClearPendingAiTrigger?.();
+      void handleGenerateAiQuiz();
+    } else if (pendingAiTrigger === 'flashcards') {
+      onClearPendingAiTrigger?.();
+      void handleGenerateAiFlashcards();
+    }
+  }, [
+    pendingAiTrigger,
+    onClearPendingAiTrigger,
+    handleGenerateAiQuiz,
+    handleGenerateAiFlashcards,
+  ]);
 
   const sessionProgress = useMemo(() => {
     if (activeTab === 'Quiz') {
@@ -647,7 +805,7 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
             )}
 
             {activeTab === 'Résumé' && activeLesson && (
-              <div className="sg-glass-subtile rounded-[16px] p-3.5">
+              <div className="sg-glass-subtile flex flex-col gap-3 rounded-[16px] p-3.5">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="max-w-2xl">
                     <div className="text-[12px] font-bold text-[#121417]">Résumé de la leçon</div>
@@ -660,19 +818,55 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
                       ))}
                     </ul>
                   </div>
-                  <button
-                    type="button"
-                    onClick={onOpenFullCourse}
-                    className="sg-focus-ring sg-btn-secondary h-[28px] rounded-full px-3.5 text-[11.5px] font-semibold text-[var(--accent)] whitespace-nowrap"
-                  >
-                    Ouvrir le cours complet
-                  </button>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={aiExplain.loading}
+                      onClick={() => void handleExplainSummary()}
+                      className="sg-focus-ring sg-btn-primary flex h-[28px] items-center gap-1 rounded-full px-3 text-[11px] font-semibold text-white whitespace-nowrap"
+                    >
+                      {aiExplain.loading ? (
+                        <Loader2 className="h-[11px] w-[11px] animate-spin" />
+                      ) : (
+                        <Sparkles className="h-[11px] w-[11px]" />
+                      )}
+                      <span>Expliquer avec {lessonTutor.name}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onOpenFullCourse(activeLesson.subject)}
+                      className="sg-focus-ring sg-btn-secondary h-[28px] rounded-full px-3.5 text-[11.5px] font-semibold text-[var(--accent)] whitespace-nowrap"
+                    >
+                      Ouvrir le cours complet
+                    </button>
+                  </div>
                 </div>
+                {aiExplain.error && (
+                  <p className="text-[11px] font-medium text-[#991B1B]">{aiExplain.error}</p>
+                )}
+                {aiExplain.data && (
+                  <div className="rounded-[12px] border border-[var(--accent-border)]/40 bg-white/80 p-3 text-[12px] leading-snug text-[#121417]">
+                    <div className="font-bold text-[var(--accent)]">
+                      Explication de {lessonTutor.name}
+                    </div>
+                    <p className="mt-0.5">{aiExplain.data.explanation}</p>
+                    {aiExplain.data.example && (
+                      <p className="mt-1 text-[#36393F]">
+                        <span className="font-semibold">Exemple :</span> {aiExplain.data.example}
+                      </p>
+                    )}
+                    {aiExplain.data.quickCheck && (
+                      <p className="mt-1 font-medium text-[var(--accent)]">
+                        Mini défi : {aiExplain.data.quickCheck}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
             {activeTab === 'Planning' && (
-              <div className="sg-glass-subtile rounded-[16px] p-3.5">
+              <div className="sg-glass-subtile flex flex-col gap-3 rounded-[16px] p-3.5">
                 {!planningCreated || editingPlanning ? (
                   <div className="grid grid-cols-1 gap-2.5 @md:grid-cols-3">
                     <div className="flex min-w-0 flex-col gap-1">
@@ -745,6 +939,47 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
                     >
                       Modifier mes séances
                     </button>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/70 pt-2">
+                  <button
+                    type="button"
+                    disabled={aiPlan.loading}
+                    onClick={() => void handleGenerateAiPlan()}
+                    className="sg-focus-ring sg-btn-secondary flex h-[28px] items-center gap-1.5 rounded-full px-3.5 text-[11px] font-semibold text-[var(--accent)] whitespace-nowrap"
+                  >
+                    {aiPlan.loading ? (
+                      <Loader2 className="h-[11.5px] w-[11.5px] animate-spin" />
+                    ) : (
+                      <Sparkles className="h-[11.5px] w-[11.5px]" />
+                    )}
+                    <span>Organiser mes séances avec {lessonTutor.name}</span>
+                  </button>
+                </div>
+
+                {aiPlan.error && (
+                  <p className="text-[11px] font-medium text-[#991B1B]">{aiPlan.error}</p>
+                )}
+
+                {aiPlan.data && (
+                  <div className="flex flex-col gap-1.5 rounded-[12px] border border-[var(--accent-border)]/40 bg-white/80 p-3 text-[12px]">
+                    <p className="font-semibold text-[#121417]">{aiPlan.data.overview}</p>
+                    <div className="grid grid-cols-1 gap-1.5 @sm:grid-cols-2">
+                      {aiPlan.data.sessions.map((s, idx) => (
+                        <div
+                          key={`${s.day}-${idx}`}
+                          className="rounded-[10px] border border-[#E5E8F0] bg-[#F8FAFC] px-2.5 py-1.5"
+                        >
+                          <div className="flex items-center justify-between text-[11px] font-bold text-[var(--accent)]">
+                            <span>{s.day}</span>
+                            <span>{s.duration}</span>
+                          </div>
+                          <div className="font-semibold text-[#121417]">{s.subject}</div>
+                          <div className="text-[11px] text-[#4B4E54]">{s.focus}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -838,7 +1073,7 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
               {activeTab === 'Résumé' && (
                 <button
                   type="button"
-                  onClick={onOpenFullCourse}
+                  onClick={() => onOpenFullCourse(activeLesson?.subject)}
                   className="sg-focus-ring font-semibold text-[var(--accent)] hover:underline"
                 >
                   Ouvrir le cours complet
@@ -921,6 +1156,14 @@ export const RevisionsScreen: React.FC<RevisionsScreenProps> = ({
       baseHeightPx={baseHeightPx}
       locked={locked}
       tutorName={lessonTutor.name}
+      tutor={lessonTutor}
+      formatIndex={2}
+      experience={experience}
+      availableSubjects={subjects}
+      openTileId={openTileId}
+      onSelectOpenTileId={onSelectOpenTileId}
+      onOpenTilePage={onOpenTilePage}
+      onOpenTutor={onOpenTutor}
       onAnalyzeTile={onAnalyzeTile}
       onChangeTiles={onChangeTiles}
       onBringToFront={onBringToFront}

@@ -1,7 +1,9 @@
 import {
   ExerciseCorrectionResult,
+  GeneratedExercise,
   GeneratedFlashcard,
   GeneratedQuizQuestion,
+  GeneratedRevisionPlan,
   NoveltyAnalysisResult,
   SiteControlAction,
   SiteNoveltyItem,
@@ -44,6 +46,7 @@ export async function generateTutorQuiz(params: {
   lessonTitle: string;
   objectif: string;
   notions: string[];
+  courseContent?: string;
   count?: number;
 }): Promise<GeneratedQuizQuestion[]> {
   const res = await postJson<{ questions: GeneratedQuizQuestion[] }>(
@@ -61,6 +64,7 @@ export async function generateTutorFlashcards(params: {
   lessonTitle: string;
   objectif: string;
   notions: string[];
+  courseContent?: string;
   count?: number;
 }): Promise<GeneratedFlashcard[]> {
   const res = await postJson<{ flashcards: GeneratedFlashcard[] }>(
@@ -68,6 +72,20 @@ export async function generateTutorFlashcards(params: {
     params,
   );
   return Array.isArray(res.flashcards) ? res.flashcards : [];
+}
+
+export async function generateTutorExercise(params: {
+  tutorName: string;
+  subject: string;
+  classLevel: ClassLevel;
+  serie: SerieOption | null;
+  lessonTitle: string;
+  competence: string;
+  category: string;
+  difficulty: string;
+  courseContent?: string;
+}): Promise<GeneratedExercise> {
+  return postJson<GeneratedExercise>('/api/tutor/generate-exercise', params);
 }
 
 export async function requestExerciseCorrection(params: {
@@ -79,6 +97,7 @@ export async function requestExerciseCorrection(params: {
   competence: string;
   checkpoints: string[];
   difficulty: string;
+  exercisePrompt?: string;
   studentAnswer: string;
   requestType: 'hint' | 'correct';
 }): Promise<ExerciseCorrectionResult> {
@@ -93,8 +112,21 @@ export async function requestLessonExplanation(params: {
   lessonTitle: string;
   objectif: string;
   notions: string[];
+  courseContent?: string;
 }): Promise<{ explanation: string; example: string; quickCheck: string }> {
   return postJson('/api/tutor/explain-lesson', params);
+}
+
+export async function requestRevisionPlan(params: {
+  tutorName: string;
+  subject: string;
+  classLevel: ClassLevel;
+  serie: SerieOption | null;
+  selectedSubjects: string[];
+  availableDays: string;
+  timePerDay: string;
+}): Promise<GeneratedRevisionPlan> {
+  return postJson<GeneratedRevisionPlan>('/api/tutor/revision-plan', params);
 }
 
 export async function requestExamPlan(params: {
@@ -118,7 +150,7 @@ export async function analyzeSiteNovelties(params: {
   classLevel: ClassLevel;
   serie: SerieOption | null;
   screenLabel: string;
-  items: { id: string; title: string; note: string }[];
+  items: { id: string; title: string; note: string; kind?: 'tile' | 'course' }[];
 }): Promise<NoveltyAnalysisResult> {
   return postJson<NoveltyAnalysisResult>('/api/tutor/analyze-novelty', params);
 }
@@ -133,9 +165,13 @@ export async function sendTutorChat(params: {
     screenLabel: string;
     classLevel: ClassLevel;
     serie: SerieOption | null;
+    activeSubject: string;
     subjects: string[];
     novelties: SiteNoveltyItem[];
     isFocusMode: boolean;
+    isCourseReaderOpen: boolean;
+    activeCourseTitle?: string;
+    activeCourseContent?: string;
   };
 }): Promise<{ reply: string; actions: SiteControlAction[] }> {
   const res = await postJson<{ reply: string; actions?: unknown }>(
@@ -147,3 +183,4 @@ export async function sendTutorChat(params: {
     actions: sanitizeSiteActions(res.actions),
   };
 }
+

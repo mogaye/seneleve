@@ -1,25 +1,49 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, HelpCircle, Loader2, Sparkles } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { CheckCircle2, Eye, HelpCircle, Loader2, Sparkles } from 'lucide-react';
+import {
+  CustomVerbatimCourse,
+  formatCourseDocumentAsPlainText,
+  getPdfCourseDocument,
+} from '../../data/pdfCourses';
 import {
   ClassExperience,
   DifficultyLevel,
   ExerciseCategory,
 } from '../../data/studyData';
-import { requestExerciseCorrection } from '../../services/tutorClient';
+import {
+  generateTutorExercise,
+  requestExerciseCorrection,
+} from '../../services/tutorClient';
 import { TileRect } from '../../utils/bentoLayout';
 import {
   ExerciseCorrectionResult,
+  GeneratedExercise,
   getSubjectTutor,
   NoveltyAnalysisResult,
 } from '../../utils/tutorAgent';
 import { BentoTileCanvas, BuiltInTileSlot } from '../BentoTileCanvas';
 
+export interface ExerciseFilterCommand {
+  category?: ExerciseCategory;
+  difficulty?: DifficultyLevel;
+  subject?: string;
+  nonce: number;
+}
+
 interface ExercicesScreenProps {
   experience: ClassExperience;
   initialSubject?: string;
+  customCourses?: CustomVerbatimCourse[];
+  externalFilter?: ExerciseFilterCommand | null;
+  pendingAiTrigger?: 'exercise' | null;
+  onClearPendingAiTrigger?: () => void;
   tiles: TileRect[];
   baseHeightPx?: number;
   locked?: boolean;
+  openTileId?: string | null;
+  onSelectOpenTileId?: (tileId: string | null) => void;
+  onOpenTilePage?: (tile: TileRect) => void;
+  onOpenTutor?: () => void;
   onSubjectChange?: (subject: string) => void;
   onAnalyzeTile?: (tile: TileRect) => Promise<NoveltyAnalysisResult>;
   onChangeTiles: (next: TileRect[]) => void;
@@ -39,16 +63,24 @@ const DIFFICULTIES: DifficultyLevel[] = ['Découverte', 'Entraînement', 'Défi'
 export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
   experience,
   initialSubject,
+  customCourses = [],
+  externalFilter = null,
+  pendingAiTrigger = null,
+  onClearPendingAiTrigger,
   tiles,
   baseHeightPx,
   locked = false,
+  openTileId = null,
+  onSelectOpenTileId,
+  onOpenTilePage,
+  onOpenTutor,
   onSubjectChange,
   onAnalyzeTile,
   onChangeTiles,
   onBringToFront,
   onGoToCours,
 }) => {
-  const { subjects, exercises } = experience;
+  const { subjects, exercises, lessons } = experience;
 
   const [selectedCategory, setSelectedCategory] = useState<ExerciseCategory>('Exercices par leçon');
   const [subjectFilter, setSubjectFilter] = useState<string>('Toutes');
@@ -65,6 +97,13 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
     error?: string;
     result?: ExerciseCorrectionResult;
   }>({ loading: false });
+  const [generatedExercise, setGeneratedExercise] = useState<{
+    loading: boolean;
+    error?: string;
+    data?: GeneratedExercise;
+    showHints: boolean;
+    showSolution: boolean;
+  }>({ loading: false, showHints: false, showSolution: false });
 
   useEffect(() => {
     setSubjectFilter(
@@ -76,7 +115,22 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
     setFinished(false);
     setStudentAnswer('');
     setCorrectionState({ loading: false });
+    setGeneratedExercise({ loading: false, showHints: false, showSolution: false });
   }, [experience.classLevel, experience.serie, initialSubject, subjects]);
+
+  useEffect(() => {
+    if (!externalFilter) return;
+    if (externalFilter.category) setSelectedCategory(externalFilter.category);
+    if (externalFilter.difficulty) setDifficulty(externalFilter.difficulty);
+    if (externalFilter.subject) {
+      setSubjectFilter(
+        subjects.includes(externalFilter.subject) ? externalFilter.subject : 'Toutes',
+      );
+    }
+    setModuleIndex(0);
+    setFinished(false);
+    setCorrectionState({ loading: false });
+  }, [externalFilter, subjects]);
 
   const modules = useMemo(() => {
     const bySubject =
@@ -120,6 +174,7 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
     setValidatedModules({});
     setFinished(false);
     setCorrectionState({ loading: false });
+    setGeneratedExercise({ loading: false, showHints: false, showSolution: false });
   };
 
   const toggleCheckpoint = (moduleId: string, idx: number) => {
@@ -140,12 +195,91 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
 
   const handleNextModule = () => {
     setCorrectionState({ loading: false });
+    setGeneratedExercise({ loading: false, showHints: false, showSolution: false });
     if (moduleIndex + 1 < totalCount) {
       setModuleIndex((i) => i + 1);
     } else {
       setFinished(true);
     }
   };
+
+  const resolveCourseTextForSubject = useCallback(
+    (subject: string, fallbackTitle: string, fallbackCompetence: string) => {
+      const customMatch = customCourses.find(
+        (c) =>
+          c.classLevel === experience.classLevel &&
+          (c.serie ?? null) === (experience.serie ?? null) &&
+          c.subject === subject,
+      );
+      if (customMatch) {
+        return `${customMatch.title}\n\n${customMatch.content}`;
+      }
+      const lessonMatch = lessons.find((l) => l.subject === subject);
+      const doc = getPdfCourseDocument({
+        classLevel: experience.classLevel,
+        serie: experience.serie,
+        subject,
+        fallbackTitle,
+        fallbackObjectif: lessonMatch?.objectif ?? fallbackCompetence,
+        fallbackNotions: lessonMatch?.notions ?? [],
+      });
+      return formatCourseDocumentAsPlainText(doc);
+    },
+    [customCourses, experience.classLevel, experience.serie, lessons],
+  );
+
+  const handleGenerateAiExercise = useCallback(async () => {
+    if (!activeModule) return;
+    const moduleTutor = getSubjectTutor(activeModule.subject);
+    setFinished(false);
+    setCorrectionState({ loading: false });
+    setGeneratedExercise({ loading: true, showHints: false, showSolution: false });
+    try {
+      const courseContent = resolveCourseTextForSubject(
+        activeModule.subject,
+        activeModule.lessonTitle,
+        activeModule.competence,
+      );
+      const data = await generateTutorExercise({
+        tutorName: moduleTutor.name,
+        subject: activeModule.subject,
+        classLevel: experience.classLevel,
+        serie: experience.serie,
+        lessonTitle: activeModule.lessonTitle,
+        competence: activeModule.competence,
+        category: selectedCategory,
+        difficulty,
+        courseContent,
+      });
+      setGeneratedExercise({
+        loading: false,
+        data,
+        showHints: false,
+        showSolution: false,
+      });
+    } catch (err) {
+      setGeneratedExercise({
+        loading: false,
+        error: err instanceof Error ? err.message : 'Exercice indisponible pour le moment.',
+        showHints: false,
+        showSolution: false,
+      });
+    }
+  }, [
+    activeModule,
+    difficulty,
+    experience.classLevel,
+    experience.serie,
+    resolveCourseTextForSubject,
+    selectedCategory,
+  ]);
+
+  useEffect(() => {
+    if (pendingAiTrigger === 'exercise') {
+      onClearPendingAiTrigger?.();
+      void handleGenerateAiExercise();
+    }
+  }, [pendingAiTrigger, onClearPendingAiTrigger, handleGenerateAiExercise]);
 
   const handleRequestCorrection = async (requestType: 'hint' | 'correct') => {
     if (!activeModule || correctionState.loading) return;
@@ -161,6 +295,7 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
         competence: activeModule.competence,
         checkpoints: activeModule.checkpoints,
         difficulty,
+        exercisePrompt: generatedExercise.data?.prompt,
         studentAnswer: studentAnswer.trim(),
         requestType,
       });
@@ -186,6 +321,7 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
               <h2 className="text-[13.5px] font-bold text-[#121417]">Choisir un entraînement</h2>
               <span className="text-[11px] font-semibold text-[var(--accent)]">
                 {experience.classLevel}
+                {experience.serie ? ` (${experience.serie})` : ''}
               </span>
             </div>
 
@@ -437,15 +573,99 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
                     })}
                   </div>
 
-                  <div className="mt-2.5 flex flex-col gap-2 border-t border-white/70 pt-2.5">
+                    <div className="mt-2.5 flex flex-col gap-2 border-t border-white/70 pt-2.5">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-[11.5px] font-bold text-[#121417]">
                         Aide &amp; correction avec {getSubjectTutor(activeModule.subject).name}
                       </span>
-                      <span className="text-[10.5px] font-medium text-[#4B4E54]">
-                        {activeModule.subject}
-                      </span>
+                      <button
+                        type="button"
+                        disabled={generatedExercise.loading}
+                        onClick={() => void handleGenerateAiExercise()}
+                        className="sg-focus-ring sg-btn-secondary flex h-[26px] items-center gap-1 rounded-full px-3 text-[10.5px] font-semibold text-[var(--accent)] whitespace-nowrap"
+                      >
+                        {generatedExercise.loading ? (
+                          <Loader2 className="h-[11px] w-[11px] animate-spin" />
+                        ) : (
+                          <Sparkles className="h-[11px] w-[11px]" />
+                        )}
+                        <span>
+                          Nouvel exercice de {getSubjectTutor(activeModule.subject).name}
+                        </span>
+                      </button>
                     </div>
+
+                    {generatedExercise.error && (
+                      <p className="text-[11px] font-medium text-[#991B1B]">
+                        {generatedExercise.error}
+                      </p>
+                    )}
+
+                    {generatedExercise.data && (
+                      <div className="rounded-[14px] border border-[var(--accent-border)]/40 bg-white/85 p-3 text-[12px] leading-snug text-[#121417]">
+                        <div className="font-bold text-[var(--accent)]">
+                          {generatedExercise.data.title}
+                        </div>
+                        <p className="mt-1 whitespace-pre-line text-[#1C1E22]">
+                          {generatedExercise.data.prompt}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          {generatedExercise.data.hints.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setGeneratedExercise((prev) => ({
+                                  ...prev,
+                                  showHints: !prev.showHints,
+                                }))
+                              }
+                              className="sg-focus-ring text-[11px] font-semibold text-[var(--accent)] hover:underline"
+                            >
+                              {generatedExercise.showHints
+                                ? 'Masquer les indices'
+                                : 'Voir les indices'}
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setGeneratedExercise((prev) => ({
+                                ...prev,
+                                showSolution: !prev.showSolution,
+                              }))
+                            }
+                            className="sg-focus-ring inline-flex items-center gap-1 text-[11px] font-semibold text-[#36393F] hover:underline"
+                          >
+                            <Eye className="h-[11px] w-[11px]" />
+                            <span>
+                              {generatedExercise.showSolution
+                                ? 'Masquer le corrigé'
+                                : 'Voir le corrigé'}
+                            </span>
+                          </button>
+                        </div>
+                        {generatedExercise.showHints && (
+                          <ul className="mt-1.5 space-y-0.5 text-[11.5px] text-[#36393F]">
+                            {generatedExercise.data.hints.map((h, i) => (
+                              <li key={i}>• {h}</li>
+                            ))}
+                          </ul>
+                        )}
+                        {generatedExercise.showSolution && (
+                          <div className="mt-2 rounded-[10px] bg-[#F4F6FA] p-2.5 text-[11.5px] text-[#1C1E22]">
+                            <div className="font-bold text-[#0D8A4E]">Corrigé détaillé</div>
+                            <p className="mt-0.5 whitespace-pre-line">
+                              {generatedExercise.data.solution}
+                            </p>
+                            {generatedExercise.data.keyTakeaway && (
+                              <p className="mt-1 font-medium text-[var(--accent)]">
+                                À retenir : {generatedExercise.data.keyTakeaway}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     <textarea
                       rows={2}
@@ -647,6 +867,14 @@ export const ExercicesScreen: React.FC<ExercicesScreenProps> = ({
       baseHeightPx={baseHeightPx}
       locked={locked}
       tutorName={tutor.name}
+      tutor={tutor}
+      formatIndex={1}
+      experience={experience}
+      availableSubjects={subjects}
+      openTileId={openTileId}
+      onSelectOpenTileId={onSelectOpenTileId}
+      onOpenTilePage={onOpenTilePage}
+      onOpenTutor={onOpenTutor}
       onAnalyzeTile={onAnalyzeTile}
       onChangeTiles={onChangeTiles}
       onBringToFront={onBringToFront}

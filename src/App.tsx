@@ -1,8 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BentoFormatView } from './components/BentoFormatView';
+import { CourseReaderPage } from './components/CourseReaderPage';
+import { ExerciseFilterCommand } from './components/screens/ExercicesScreen';
 import { RevisionTab } from './components/screens/RevisionsScreen';
 import { TutorAssistantDrawer } from './components/TutorAssistantDrawer';
-import { getClassExperience, getClassMeta, getDefaultSerieForClass } from './data/studyData';
+import {
+  CustomVerbatimCourse,
+  formatCourseDocumentAsPlainText,
+  getPdfCourseDocument,
+  loadCustomCourses,
+  saveCustomCourses,
+} from './data/pdfCourses';
+import {
+  getClassExperience,
+  getClassMeta,
+  getDefaultSerieForClass,
+  SubjectStatus,
+} from './data/studyData';
 import { analyzeSiteNovelties } from './services/tutorClient';
 import {
   BentoLayoutsState,
@@ -15,6 +29,7 @@ import {
   saveOuterLayout,
   TileRect,
 } from './utils/bentoLayout';
+import { createBlock, summarizeCustomTileText } from './utils/customTile';
 import {
   enterBrowserFullscreen,
   exitBrowserFullscreen,
@@ -50,11 +65,27 @@ export default function App() {
   const [outerLayout, setOuterLayout] = useState<TileRect[]>(loadSavedOuterLayout);
   const [isLayoutLocked, setIsLayoutLocked] = useState<boolean>(loadSavedLayoutLocked);
   const [activeSubject, setActiveSubject] = useState<string>('Langue et communication');
+  const [customCourses, setCustomCourses] = useState<CustomVerbatimCourse[]>(
+    loadCustomCourses,
+  );
+  const [courseReaderOpen, setCourseReaderOpen] = useState(false);
+  const [openTileId, setOpenTileId] = useState<string | null>(null);
+  const [activeCustomCourseId, setActiveCustomCourseId] = useState<string | null>(null);
   const [tutorDrawerOpen, setTutorDrawerOpen] = useState(false);
   const [requestedRevisionTab, setRequestedRevisionTab] = useState<RevisionTab | null>(null);
+  const [pendingRevisionAiTrigger, setPendingRevisionAiTrigger] = useState<
+    'quiz' | 'flashcards' | null
+  >(null);
+  const [pendingExerciseAiTrigger, setPendingExerciseAiTrigger] = useState<
+    'exercise' | null
+  >(null);
+  const [exerciseFilterOverride, setExerciseFilterOverride] =
+    useState<ExerciseFilterCommand | null>(null);
   const [exerciseSubjectPrefill, setExerciseSubjectPrefill] = useState<string | undefined>(
     undefined,
   );
+  const [examDate, setExamDate] = useState<string>('');
+  const [subjectStatuses, setSubjectStatuses] = useState<Record<string, SubjectStatus>>({});
   const [dragOffsetX, setDragOffsetX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [transition, setTransition] = useState<SlideTransition | null>(null);
@@ -71,6 +102,10 @@ export default function App() {
     saveLayoutLocked(isLayoutLocked);
   }, [isLayoutLocked]);
 
+  useEffect(() => {
+    saveCustomCourses(customCourses);
+  }, [customCourses]);
+
   const isFocusMode = state.activeUtilityNav === 0;
   const wasNativeFullscreenRef = useRef(false);
 
@@ -78,8 +113,84 @@ export default function App() {
     () => getClassExperience(state.selectedClass, state.selectedSerie),
     [state.selectedClass, state.selectedSerie],
   );
+
+  useEffect(() => {
+    setSubjectStatuses({
+      ...(activeExperience.subjects[0]
+        ? { [activeExperience.subjects[0]]: 'Révisée' }
+        : {}),
+      ...(activeExperience.subjects[1]
+        ? { [activeExperience.subjects[1]]: 'En cours' }
+        : {}),
+    });
+  }, [activeExperience.classLevel, activeExperience.serie, activeExperience.subjects]);
+
   const activeTutor = useMemo(() => getSubjectTutor(activeSubject), [activeSubject]);
-  const novelties = useMemo(() => extractSiteNovelties(layouts), [layouts]);
+  const novelties = useMemo(
+    () => extractSiteNovelties(layouts, customCourses),
+    [layouts, customCourses],
+  );
+
+  const activeCourseContext = useMemo(() => {
+    const customMatch = activeCustomCourseId
+      ? customCourses.find((c) => c.id === activeCustomCourseId)
+      : undefined;
+    if (customMatch) {
+      return {
+        title: customMatch.title,
+        content: customMatch.content,
+      };
+    }
+    const lessonMatch =
+      activeExperience.lessons.find((l) => l.subject === activeSubject) ??
+      activeExperience.lessons[0];
+    const doc = getPdfCourseDocument({
+      classLevel: activeExperience.classLevel,
+      serie: activeExperience.serie,
+      subject: activeSubject,
+      fallbackTitle: lessonMatch?.title ?? activeSubject,
+      fallbackObjectif: lessonMatch?.objectif ?? '',
+      fallbackNotions: lessonMatch?.notions ?? [],
+    });
+    return {
+      title: doc.title,
+      content: formatCourseDocumentAsPlainText(doc),
+    };
+  }, [activeCustomCourseId, activeExperience, activeSubject, customCourses]);
+
+  const handleOpenCourseReader = useCallback(
+    (subject: string, customCourseId?: string) => {
+      setActiveSubject(subject);
+      setActiveCustomCourseId(customCourseId ?? null);
+      setCourseReaderOpen(true);
+    },
+    [],
+  );
+
+  const handleAddCustomCourse = useCallback(
+    (input: { subject: string; title: string; content: string }): CustomVerbatimCourse => {
+      const created: CustomVerbatimCourse = {
+        id: `course-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        classLevel: state.selectedClass,
+        serie: state.selectedSerie,
+        subject: input.subject,
+        title: input.title,
+        content: input.content,
+        createdAt: new Date().toISOString(),
+      };
+      setCustomCourses((prev) => [created, ...prev]);
+      return created;
+    },
+    [state.selectedClass, state.selectedSerie],
+  );
+
+  const handleDeleteCustomCourse = useCallback(
+    (courseId: string) => {
+      setCustomCourses((prev) => prev.filter((c) => c.id !== courseId));
+      setActiveCustomCourseId((prev) => (prev === courseId ? null : prev));
+    },
+    [],
+  );
 
   const toggleLayoutLock = useCallback(() => {
     setIsLayoutLocked((prev) => !prev);
@@ -157,6 +268,7 @@ export default function App() {
 
       setDragOffsetX(0);
       setIsDragging(false);
+      setOpenTileId(null);
       setState((prev) => setFormat(prev, targetFormat));
       setTransition({
         from: fromFormat,
@@ -196,7 +308,7 @@ export default function App() {
     async (tile: TileRect) => {
       return analyzeSiteNovelties({
         tutorName: activeTutor.name,
-        subject: activeTutor.subject,
+        subject: tile.subject || activeTutor.subject,
         classLevel: state.selectedClass,
         serie: state.selectedSerie,
         screenLabel: FORMAT_META[state.activeFormat].bottomLabel,
@@ -204,7 +316,8 @@ export default function App() {
           {
             id: tile.id,
             title: tile.title?.trim() || 'Nouveau carreau',
-            note: tile.note?.trim() || '',
+            note: summarizeCustomTileText(tile) || tile.note?.trim() || '',
+            kind: 'tile',
           },
         ],
       });
@@ -215,32 +328,103 @@ export default function App() {
   const handleExecuteSiteActions = useCallback(
     (actions: SiteControlAction[]) => {
       let targetFormatForTile: FormatIndex = state.activeFormat;
+      let currentClassForAction = state.selectedClass;
+      let currentSerieForAction = state.selectedSerie;
 
       for (const action of actions) {
         if (action.type === 'navigate') {
           targetFormatForTile = action.formatIndex;
+          setCourseReaderOpen(false);
+          setOpenTileId(null);
           setState((prev) => setFormat(prev, action.formatIndex));
         } else if (action.type === 'set_class') {
+          currentClassForAction = action.classLevel;
+          currentSerieForAction =
+            action.serie !== undefined
+              ? action.serie
+              : getDefaultSerieForClass(action.classLevel);
+          const nextExp = getClassExperience(
+            currentClassForAction,
+            currentSerieForAction,
+          );
+          if (nextExp.subjects[0]) {
+            setActiveSubject(nextExp.subjects[0]);
+          }
+          setActiveCustomCourseId(null);
           setState((prev) => {
             const updated = setActiveClass(prev, action.classLevel);
             return {
               ...updated,
-              selectedSerie:
-                action.serie !== undefined
-                  ? action.serie
-                  : getDefaultSerieForClass(action.classLevel),
+              selectedSerie: currentSerieForAction,
             };
           });
+        } else if (action.type === 'select_subject') {
+          setActiveSubject(action.subject);
+          setActiveCustomCourseId(null);
+        } else if (action.type === 'open_course') {
+          targetFormatForTile = 0;
+          if (action.subject) {
+            setActiveSubject(action.subject);
+          }
+          setActiveCustomCourseId(action.courseId ?? null);
+          setState((prev) => setFormat(prev, 0));
+          setCourseReaderOpen(true);
+        } else if (action.type === 'close_course') {
+          setCourseReaderOpen(false);
         } else if (action.type === 'open_revision_tab') {
           targetFormatForTile = 2;
+          setCourseReaderOpen(false);
           setRequestedRevisionTab(action.tab);
           setState((prev) => setFormat(prev, 2));
+        } else if (action.type === 'generate_quiz') {
+          targetFormatForTile = 2;
+          setCourseReaderOpen(false);
+          setRequestedRevisionTab('Quiz');
+          setPendingRevisionAiTrigger('quiz');
+          setState((prev) => setFormat(prev, 2));
+        } else if (action.type === 'generate_flashcards') {
+          targetFormatForTile = 2;
+          setCourseReaderOpen(false);
+          setRequestedRevisionTab('Flashcards');
+          setPendingRevisionAiTrigger('flashcards');
+          setState((prev) => setFormat(prev, 2));
+        } else if (action.type === 'set_exercise_filter') {
+          targetFormatForTile = 1;
+          setCourseReaderOpen(false);
+          if (action.subject) {
+            setExerciseSubjectPrefill(action.subject);
+          }
+          setExerciseFilterOverride({
+            category: action.category,
+            difficulty: action.difficulty,
+            subject: action.subject,
+            nonce: Date.now(),
+          });
+          setState((prev) => setFormat(prev, 1));
+        } else if (action.type === 'generate_exercise') {
+          targetFormatForTile = 1;
+          setCourseReaderOpen(false);
+          setPendingExerciseAiTrigger('exercise');
+          setState((prev) => setFormat(prev, 1));
+        } else if (action.type === 'set_exam_date') {
+          targetFormatForTile = 3;
+          setCourseReaderOpen(false);
+          setExamDate(action.date);
+          setState((prev) => setFormat(prev, 3));
+        } else if (action.type === 'update_subject_status') {
+          targetFormatForTile = 3;
+          setCourseReaderOpen(false);
+          setSubjectStatuses((prev) => ({
+            ...prev,
+            [action.subject]: action.status,
+          }));
+          setState((prev) => setFormat(prev, 3));
         } else if (action.type === 'add_note_tile') {
           const fmt = targetFormatForTile;
           setLayouts((prev) => {
             const current = prev[fmt];
             const customCount = current.filter((t) => t.isCustom).length;
-            const created = createCustomTile(current, customCount);
+            const created = createCustomTile(current, customCount, activeSubject);
             return {
               ...prev,
               [fmt]: [
@@ -249,10 +433,27 @@ export default function App() {
                   ...created,
                   title: action.title,
                   note: action.note,
+                  blocks: [createBlock('text', { text: action.note })],
                 },
               ],
             };
           });
+        } else if (action.type === 'add_course') {
+          const targetSubject = action.subject?.trim() || activeSubject;
+          const created: CustomVerbatimCourse = {
+            id: `course-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            classLevel: currentClassForAction,
+            serie: currentSerieForAction,
+            subject: targetSubject,
+            title: action.title,
+            content: action.content,
+            createdAt: new Date().toISOString(),
+          };
+          setCustomCourses((prev) => [created, ...prev]);
+          setActiveSubject(targetSubject);
+          setActiveCustomCourseId(created.id);
+          setState((prev) => setFormat(prev, 0));
+          setCourseReaderOpen(true);
         } else if (action.type === 'toggle_focus') {
           if (action.enabled && state.activeUtilityNav !== 0) {
             setState((prev) => ({ ...prev, activeUtilityNav: 0 }));
@@ -265,13 +466,19 @@ export default function App() {
         }
       }
     },
-    [state.activeFormat, state.activeUtilityNav],
+    [
+      activeSubject,
+      state.activeFormat,
+      state.activeUtilityNav,
+      state.selectedClass,
+      state.selectedSerie,
+    ],
   );
 
   // Keyboard navigation (ArrowRight pushes to next screen, ArrowLeft to previous, Escape exits Focus)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (tutorDrawerOpen) return;
+      if (tutorDrawerOpen || courseReaderOpen || openTileId) return;
 
       if (event.key === 'Escape' && isFocusMode) {
         wasNativeFullscreenRef.current = false;
@@ -303,10 +510,18 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFocusMode, state.activeFormat, transition, triggerSlideTo, tutorDrawerOpen]);
+  }, [
+    courseReaderOpen,
+    isFocusMode,
+    openTileId,
+    state.activeFormat,
+    transition,
+    triggerSlideTo,
+    tutorDrawerOpen,
+  ]);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLElement>) => {
-    if (transition) return;
+    if (transition || courseReaderOpen || openTileId) return;
     if (event.button !== 0 && event.pointerType === 'mouse') return;
     const target = event.target as HTMLElement | null;
     if (
@@ -393,7 +608,7 @@ export default function App() {
   };
 
   const handleWheel = (event: React.WheelEvent<HTMLElement>) => {
-    if (transition || isDragging) return;
+    if (transition || isDragging || courseReaderOpen || openTileId) return;
     const now = Date.now();
     if (now - wheelCooldownRef.current < 460) return;
 
@@ -417,6 +632,43 @@ export default function App() {
 
   const activeThemeClass = FORMAT_META[state.activeFormat].themeClass;
   const activeCycleClass = getClassMeta(state.selectedClass).cycleClass;
+
+  const sharedBentoProps = {
+    state,
+    setState,
+    layouts,
+    setLayouts,
+    outerLayout,
+    setOuterLayout,
+    isLayoutLocked,
+    isFocusMode,
+    tutor: activeTutor,
+    noveltiesCount: novelties.length,
+    selectedSubject: activeSubject,
+    customCourses,
+    requestedRevisionTab,
+    pendingRevisionAiTrigger,
+    pendingExerciseAiTrigger,
+    exerciseFilterOverride,
+    examDate,
+    subjectStatuses,
+    onClearRequestedTab: () => setRequestedRevisionTab(null),
+    onClearPendingRevisionAiTrigger: () => setPendingRevisionAiTrigger(null),
+    onClearPendingExerciseAiTrigger: () => setPendingExerciseAiTrigger(null),
+    onExamDateChange: setExamDate,
+    onSubjectStatusesChange: setSubjectStatuses,
+    onSubjectChange: setActiveSubject,
+    onOpenCourseReader: handleOpenCourseReader,
+    onAnalyzeTile: handleAnalyzeTile,
+    onOpenTutor: () => setTutorDrawerOpen(true),
+    openTileId,
+    onSelectOpenTileId: setOpenTileId,
+    onToggleLayoutLock: toggleLayoutLock,
+    onToggleFocus: handleToggleFocus,
+    onNavigateTo: navigateToFormat,
+    exerciseSubjectPrefill,
+    onPrefillExerciseSubject: (subject: string) => setExerciseSubjectPrefill(subject),
+  };
 
   return (
     <main
@@ -448,29 +700,7 @@ export default function App() {
                 : 'none',
             }}
           >
-            <BentoFormatView
-              formatIndex={transition.from}
-              state={state}
-              setState={setState}
-              layouts={layouts}
-              setLayouts={setLayouts}
-              outerLayout={outerLayout}
-              setOuterLayout={setOuterLayout}
-              isLayoutLocked={isLayoutLocked}
-              isFocusMode={isFocusMode}
-              tutor={activeTutor}
-              noveltiesCount={novelties.length}
-              requestedRevisionTab={requestedRevisionTab}
-              onClearRequestedTab={() => setRequestedRevisionTab(null)}
-              onSubjectChange={setActiveSubject}
-              onAnalyzeTile={handleAnalyzeTile}
-              onOpenTutor={() => setTutorDrawerOpen(true)}
-              onToggleLayoutLock={toggleLayoutLock}
-              onToggleFocus={handleToggleFocus}
-              onNavigateTo={navigateToFormat}
-              exerciseSubjectPrefill={exerciseSubjectPrefill}
-              onPrefillExerciseSubject={(subject) => setExerciseSubjectPrefill(subject)}
-            />
+            <BentoFormatView formatIndex={transition.from} {...sharedBentoProps} />
           </div>
 
           <div
@@ -484,29 +714,7 @@ export default function App() {
                 : 'none',
             }}
           >
-            <BentoFormatView
-              formatIndex={transition.to}
-              state={state}
-              setState={setState}
-              layouts={layouts}
-              setLayouts={setLayouts}
-              outerLayout={outerLayout}
-              setOuterLayout={setOuterLayout}
-              isLayoutLocked={isLayoutLocked}
-              isFocusMode={isFocusMode}
-              tutor={activeTutor}
-              noveltiesCount={novelties.length}
-              requestedRevisionTab={requestedRevisionTab}
-              onClearRequestedTab={() => setRequestedRevisionTab(null)}
-              onSubjectChange={setActiveSubject}
-              onAnalyzeTile={handleAnalyzeTile}
-              onOpenTutor={() => setTutorDrawerOpen(true)}
-              onToggleLayoutLock={toggleLayoutLock}
-              onToggleFocus={handleToggleFocus}
-              onNavigateTo={navigateToFormat}
-              exerciseSubjectPrefill={exerciseSubjectPrefill}
-              onPrefillExerciseSubject={(subject) => setExerciseSubjectPrefill(subject)}
-            />
+            <BentoFormatView formatIndex={transition.to} {...sharedBentoProps} />
           </div>
         </>
       ) : (
@@ -520,29 +728,7 @@ export default function App() {
                 transition: 'none',
               }}
             >
-              <BentoFormatView
-                formatIndex={peekFormat}
-                state={state}
-                setState={setState}
-                layouts={layouts}
-                setLayouts={setLayouts}
-                outerLayout={outerLayout}
-                setOuterLayout={setOuterLayout}
-                isLayoutLocked={isLayoutLocked}
-                isFocusMode={isFocusMode}
-                tutor={activeTutor}
-                noveltiesCount={novelties.length}
-                requestedRevisionTab={requestedRevisionTab}
-                onClearRequestedTab={() => setRequestedRevisionTab(null)}
-                onSubjectChange={setActiveSubject}
-                onAnalyzeTile={handleAnalyzeTile}
-                onOpenTutor={() => setTutorDrawerOpen(true)}
-                onToggleLayoutLock={toggleLayoutLock}
-                onToggleFocus={handleToggleFocus}
-                onNavigateTo={navigateToFormat}
-                exerciseSubjectPrefill={exerciseSubjectPrefill}
-                onPrefillExerciseSubject={(subject) => setExerciseSubjectPrefill(subject)}
-              />
+              <BentoFormatView formatIndex={peekFormat} {...sharedBentoProps} />
             </div>
           )}
 
@@ -555,32 +741,47 @@ export default function App() {
                 : 'transform 240ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
-            <BentoFormatView
-              formatIndex={state.activeFormat}
-              state={state}
-              setState={setState}
-              layouts={layouts}
-              setLayouts={setLayouts}
-              outerLayout={outerLayout}
-              setOuterLayout={setOuterLayout}
-              isLayoutLocked={isLayoutLocked}
-              isFocusMode={isFocusMode}
-              tutor={activeTutor}
-              noveltiesCount={novelties.length}
-              requestedRevisionTab={requestedRevisionTab}
-              onClearRequestedTab={() => setRequestedRevisionTab(null)}
-              onSubjectChange={setActiveSubject}
-              onAnalyzeTile={handleAnalyzeTile}
-              onOpenTutor={() => setTutorDrawerOpen(true)}
-              onToggleLayoutLock={toggleLayoutLock}
-              onToggleFocus={handleToggleFocus}
-              onNavigateTo={navigateToFormat}
-              exerciseSubjectPrefill={exerciseSubjectPrefill}
-              onPrefillExerciseSubject={(subject) => setExerciseSubjectPrefill(subject)}
-            />
+            <BentoFormatView formatIndex={state.activeFormat} {...sharedBentoProps} />
           </div>
         </>
       )}
+
+      <CourseReaderPage
+        open={courseReaderOpen}
+        experience={activeExperience}
+        selectedSubject={activeSubject}
+        customCourses={customCourses}
+        activeCustomCourseId={activeCustomCourseId}
+        onSelectSubject={setActiveSubject}
+        onSelectCustomCourse={setActiveCustomCourseId}
+        onAddCustomCourse={handleAddCustomCourse}
+        onDeleteCustomCourse={handleDeleteCustomCourse}
+        onClose={() => setCourseReaderOpen(false)}
+        onOpenTutor={(subject) => {
+          if (subject) setActiveSubject(subject);
+          setTutorDrawerOpen(true);
+        }}
+        onStartQuiz={(subject) => {
+          setActiveSubject(subject);
+          setCourseReaderOpen(false);
+          setRequestedRevisionTab('Quiz');
+          setPendingRevisionAiTrigger('quiz');
+          setState((prev) => setFormat(prev, 2));
+        }}
+        onStartFlashcards={(subject) => {
+          setActiveSubject(subject);
+          setCourseReaderOpen(false);
+          setRequestedRevisionTab('Flashcards');
+          setPendingRevisionAiTrigger('flashcards');
+          setState((prev) => setFormat(prev, 2));
+        }}
+        onStartExercises={(subject) => {
+          setActiveSubject(subject);
+          setExerciseSubjectPrefill(subject);
+          setCourseReaderOpen(false);
+          setState((prev) => setFormat(prev, 1));
+        }}
+      />
 
       <TutorAssistantDrawer
         open={tutorDrawerOpen}
@@ -590,9 +791,13 @@ export default function App() {
         screenLabel={FORMAT_META[state.activeFormat].bottomLabel}
         classLevel={state.selectedClass}
         serie={state.selectedSerie}
+        activeSubject={activeSubject}
         subjects={activeExperience.subjects}
         novelties={novelties}
         isFocusMode={isFocusMode}
+        isCourseReaderOpen={courseReaderOpen}
+        activeCourseTitle={activeCourseContext.title}
+        activeCourseContent={activeCourseContext.content}
         onExecuteActions={handleExecuteSiteActions}
       />
     </main>
