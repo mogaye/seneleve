@@ -1,4 +1,47 @@
-export type FormatIndex = 0 | 1 | 2;
+export type FormatIndex = 0 | 1 | 2 | 3;
+
+export interface FormatMeta {
+  index: FormatIndex;
+  id: 'cours' | 'exercice' | 'revision' | 'examen';
+  label: string;
+  shortLabel: string;
+  themeClass: string;
+  tabLabels?: readonly [string, string, string, string];
+}
+
+export const FORMAT_META: readonly FormatMeta[] = [
+  {
+    index: 0,
+    id: 'cours',
+    label: 'Cours',
+    shortLabel: 'Cours',
+    themeClass: 'theme-cours',
+  },
+  {
+    index: 1,
+    id: 'exercice',
+    label: 'Exercice & Examen',
+    shortLabel: 'Exercice & Examen',
+    themeClass: 'theme-exercice',
+  },
+  {
+    index: 2,
+    id: 'revision',
+    label: 'Quiz · Flashcard · Résumé · Planification',
+    shortLabel: 'Quiz · Flashcard · Résumé · Planning',
+    themeClass: 'theme-revision',
+    tabLabels: ['Quiz', 'Flashcard', 'Résumé', 'Planning'],
+  },
+  {
+    index: 3,
+    id: 'examen',
+    label: 'Préparation Examen',
+    shortLabel: 'Préparation Examen',
+    themeClass: 'theme-examen',
+  },
+] as const;
+
+export const TOTAL_FORMATS = FORMAT_META.length;
 
 export interface DashboardState {
   activeFormat: FormatIndex;
@@ -37,12 +80,12 @@ export function createInitialDashboardState(): DashboardState {
 }
 
 export function stepFormat(current: FormatIndex, delta: 1 | -1): FormatIndex {
-  const next = (current + delta + 3) % 3;
+  const next = (current + delta + TOTAL_FORMATS) % TOTAL_FORMATS;
   return next as FormatIndex;
 }
 
 export function setFormat(state: DashboardState, index: number): DashboardState {
-  const clamped = Math.max(0, Math.min(2, Math.round(index))) as FormatIndex;
+  const clamped = Math.max(0, Math.min(TOTAL_FORMATS - 1, Math.round(index))) as FormatIndex;
   return {
     ...state,
     activeFormat: clamped,

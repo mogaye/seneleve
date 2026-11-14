@@ -8,35 +8,75 @@
     margin: 0;
     padding: 0;
     background-color: #efefe9;
-    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color: #141414;
     -webkit-font-smoothing: antialiased;
   }
 }
 
-.sg-scroll::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+/* Format 1: Cours (Cobalt Blue) */
+.theme-cours {
+  --accent: #0e4fd6;
+  --accent-grad-top: #1f64eb;
+  --accent-hover-top: #3376f2;
+  --accent-hover-bot: #1c5de0;
+  --accent-pressed: #0a3daa;
+  --accent-soft: #dce6fa;
+  --accent-soft-hover: #cfdefc;
+  --accent-halo: #9bb9f5;
+  --accent-border: #2b66dc;
+  --accent-rgb: 37, 99, 235;
+  --accent-dark-rgb: 14, 79, 214;
 }
 
-.sg-scroll::-webkit-scrollbar-track {
-  background: transparent;
+/* Format 2: Exercice & Examen (Emerald Green) */
+.theme-exercice {
+  --accent: #0d8a4e;
+  --accent-grad-top: #16a35f;
+  --accent-hover-top: #20b86e;
+  --accent-hover-bot: #129153;
+  --accent-pressed: #096b3b;
+  --accent-soft: #d9f3e4;
+  --accent-soft-hover: #c5ebd6;
+  --accent-halo: #88d8ad;
+  --accent-border: #16a34a;
+  --accent-rgb: 22, 163, 74;
+  --accent-dark-rgb: 13, 138, 78;
 }
 
-.sg-scroll::-webkit-scrollbar-thumb {
-  background: rgba(102, 104, 108, 0.25);
-  border-radius: 9999px;
+/* Format 3: Quiz, Flashcard, Résumé & Planification (Warm Amber) */
+.theme-revision {
+  --accent: #c26b06;
+  --accent-grad-top: #e08212;
+  --accent-hover-top: #ec9224;
+  --accent-hover-bot: #cc7208;
+  --accent-pressed: #9b5404;
+  --accent-soft: #fdeacc;
+  --accent-soft-hover: #fbe0b4;
+  --accent-halo: #f6c478;
+  --accent-border: #d97706;
+  --accent-rgb: 217, 119, 6;
+  --accent-dark-rgb: 194, 107, 6;
 }
 
-.sg-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(14, 79, 214, 0.45);
+/* Format 4: Préparation Examen (Crimson Ruby) */
+.theme-examen {
+  --accent: #c81e2b;
+  --accent-grad-top: #e0313f;
+  --accent-hover-top: #eb4754;
+  --accent-hover-bot: #cf2330;
+  --accent-pressed: #9c1520;
+  --accent-soft: #fce0e2;
+  --accent-soft-hover: #f9cbd0;
+  --accent-halo: #f39ca3;
+  --accent-border: #dc2626;
+  --accent-rgb: 220, 38, 38;
+  --accent-dark-rgb: 200, 30, 43;
 }
 
 .styleguide-canvas {
   background:
     radial-gradient(
       ellipse 70% 65% at 72% 28%,
-      rgba(120, 165, 255, 0.14) 0%,
+      rgba(var(--accent-rgb, 37, 99, 235), 0.13) 0%,
       rgba(255, 255, 255, 0.45) 45%,
       rgba(239, 239, 233, 0.94) 80%,
       #e6e6e0 100%
@@ -45,86 +85,140 @@
 
 .sg-card-l1 {
   background-color: #fbfbf9;
-  border: 1px solid rgba(155, 174, 214, 0.65);
+  border: 1px solid rgba(var(--accent-rgb), 0.34);
   box-shadow:
     0 2px 8px rgba(17, 18, 20, 0.05),
-    0 6px 20px rgba(14, 79, 214, 0.13),
-    0 0 26px rgba(59, 130, 246, 0.1);
+    0 6px 20px rgba(var(--accent-dark-rgb), 0.13),
+    0 0 26px rgba(var(--accent-rgb), 0.1);
 }
 
 .sg-card-l2 {
   background-color: #ffffff;
-  border: 1.5px solid rgba(59, 130, 246, 0.46);
+  border: 1.5px solid rgba(var(--accent-rgb), 0.48);
   box-shadow:
     0 4px 14px rgba(17, 18, 20, 0.06),
-    0 12px 30px rgba(14, 79, 214, 0.24),
-    0 0 38px rgba(59, 130, 246, 0.16),
+    0 12px 30px rgba(var(--accent-dark-rgb), 0.24),
+    0 0 38px rgba(var(--accent-rgb), 0.16),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
 .sg-card-l3 {
   background-color: #ffffff;
-  border: 1.5px solid rgba(47, 111, 235, 0.8);
+  border: 1.5px solid rgba(var(--accent-rgb), 0.8);
   box-shadow:
-    0 0 0 3px rgba(59, 130, 246, 0.15),
-    0 12px 36px rgba(14, 79, 214, 0.34),
-    0 0 48px rgba(37, 99, 235, 0.24),
+    0 0 0 3px rgba(var(--accent-rgb), 0.15),
+    0 12px 36px rgba(var(--accent-dark-rgb), 0.34),
+    0 0 48px rgba(var(--accent-rgb), 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
 .sg-btn-primary {
-  background: linear-gradient(180deg, #1f64eb 0%, #0e4fd6 100%);
+  background: linear-gradient(180deg, var(--accent-grad-top) 0%, var(--accent) 100%);
   box-shadow:
-    0 0 18px rgba(37, 99, 235, 0.48),
-    0 6px 18px rgba(14, 79, 214, 0.38),
+    0 0 18px rgba(var(--accent-rgb), 0.48),
+    0 6px 18px rgba(var(--accent-dark-rgb), 0.38),
     inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .sg-btn-primary:hover {
-  background: linear-gradient(180deg, #3376f2 0%, #1c5de0 100%);
+  background: linear-gradient(180deg, var(--accent-hover-top) 0%, var(--accent-hover-bot) 100%);
   box-shadow:
-    0 0 26px rgba(59, 130, 246, 0.65),
-    0 8px 24px rgba(14, 79, 214, 0.46),
+    0 0 26px rgba(var(--accent-rgb), 0.65),
+    0 8px 24px rgba(var(--accent-dark-rgb), 0.46),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .sg-btn-primary:active {
-  background: #0a3daa;
+  background: var(--accent-pressed);
   box-shadow:
-    0 0 14px rgba(14, 79, 214, 0.42),
-    0 2px 8px rgba(10, 61, 170, 0.35);
+    0 0 14px rgba(var(--accent-dark-rgb), 0.42),
+    0 2px 8px rgba(var(--accent-dark-rgb), 0.35);
   transform: translateY(1px);
 }
 
 .sg-btn-secondary {
-  background-color: #dce6fa;
-  border: 1.5px solid #2b66dc;
+  background-color: var(--accent-soft);
+  border: 1.5px solid var(--accent-border);
   box-shadow:
-    0 0 16px rgba(43, 102, 220, 0.25),
-    0 4px 12px rgba(14, 79, 214, 0.16);
+    0 0 16px rgba(var(--accent-rgb), 0.25),
+    0 4px 12px rgba(var(--accent-dark-rgb), 0.16);
 }
 
 .sg-btn-secondary:hover {
-  background-color: #cfdefc;
-  border-color: #0e4fd6;
+  background-color: var(--accent-soft-hover);
+  border-color: var(--accent);
   box-shadow:
-    0 0 22px rgba(43, 102, 220, 0.36),
-    0 6px 16px rgba(14, 79, 214, 0.24);
+    0 0 22px rgba(var(--accent-rgb), 0.36),
+    0 6px 16px rgba(var(--accent-dark-rgb), 0.24);
 }
 
 .sg-btn-secondary:active {
-  background-color: #0e4fd6;
-  border-color: #0a3daa;
-  box-shadow: 0 0 16px rgba(14, 79, 214, 0.45);
+  background-color: var(--accent);
+  border-color: var(--accent-pressed);
+  box-shadow: 0 0 16px rgba(var(--accent-dark-rgb), 0.45);
   transform: translateY(1px);
+}
+
+.sg-accent-bar {
+  background-color: var(--accent);
+  box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.72);
+}
+
+.sg-accent-switch {
+  background-color: var(--accent);
+  box-shadow:
+    0 0 0 2px rgba(var(--accent-rgb), 0.28),
+    0 0 14px rgba(var(--accent-rgb), 0.58);
+}
+
+.sg-selected-capsule {
+  border: 1.5px solid var(--accent-border);
+  background-color: var(--accent-soft);
+  box-shadow:
+    0 0 22px rgba(var(--accent-rgb), 0.34),
+    0 4px 14px rgba(var(--accent-dark-rgb), 0.22);
+}
+
+.sg-selected-capsule:hover {
+  background-color: var(--accent-soft-hover);
+}
+
+.sg-halo-ring {
+  background-color: var(--accent-halo);
+  box-shadow:
+    0 0 0 3px rgba(var(--accent-rgb), 0.35),
+    0 0 18px rgba(var(--accent-rgb), 0.65);
+}
+
+.sg-halo-core {
+  background-color: var(--accent);
+  box-shadow: 0 0 10px rgba(var(--accent-dark-rgb), 0.5);
+}
+
+.sg-nav-active {
+  background-color: var(--accent);
+  box-shadow:
+    0 0 0 3px rgba(var(--accent-rgb), 0.3),
+    0 0 18px rgba(var(--accent-rgb), 0.58);
+}
+
+.sg-nav-idle {
+  border: 1px solid #bdbdb8;
+  background-color: #e3e3de;
+}
+
+.sg-nav-idle:hover {
+  border-color: var(--accent-border);
+  background-color: var(--accent-soft);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.28);
 }
 
 .sg-focus-ring:focus-visible {
   outline: none;
   box-shadow:
     0 0 0 2px #ffffff,
-    0 0 0 5px rgba(37, 99, 235, 0.75),
-    0 0 22px rgba(37, 99, 235, 0.55);
+    0 0 0 5px rgba(var(--accent-rgb), 0.75),
+    0 0 22px rgba(var(--accent-rgb), 0.55);
 }
 
 @media (prefers-reduced-motion: reduce) {

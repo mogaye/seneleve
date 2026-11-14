@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   clampPercentage,
   createInitialDashboardState,
+  FORMAT_META,
   resolveSwipeDirection,
   selectHeroPill,
   selectListRow,
@@ -19,6 +20,7 @@ import {
 test('initial state matches reference wireframe defaults', () => {
   const state = createInitialDashboardState();
   assert.equal(state.activeFormat, 0);
+  assert.equal(FORMAT_META.length, 4);
   assert.equal(state.activeListRow, 2); // Row 3 active capsule
   assert.equal(state.moduleSwitchOn, true);
   assert.equal(state.transportSwitchOn, true);
@@ -26,18 +28,20 @@ test('initial state matches reference wireframe defaults', () => {
   assert.equal(state.mediaProgress, 48);
 });
 
-test('stepFormat cycles through 3 formats cleanly in both directions', () => {
+test('stepFormat cycles through all 4 formats cleanly in both directions', () => {
   assert.equal(stepFormat(0, 1), 1);
   assert.equal(stepFormat(1, 1), 2);
-  assert.equal(stepFormat(2, 1), 0);
-  assert.equal(stepFormat(0, -1), 2);
-  assert.equal(stepFormat(2, -1), 1);
+  assert.equal(stepFormat(2, 1), 3);
+  assert.equal(stepFormat(3, 1), 0);
+  assert.equal(stepFormat(0, -1), 3);
+  assert.equal(stepFormat(3, -1), 2);
 });
 
-test('setFormat clamps index to 0..2', () => {
+test('setFormat clamps index to 0..3', () => {
   const initial = createInitialDashboardState();
-  assert.equal(setFormat(initial, 1).activeFormat, 1);
-  assert.equal(setFormat(initial, 5).activeFormat, 2);
+  assert.equal(setFormat(initial, 2).activeFormat, 2);
+  assert.equal(setFormat(initial, 3).activeFormat, 3);
+  assert.equal(setFormat(initial, 9).activeFormat, 3);
   assert.equal(setFormat(initial, -2).activeFormat, 0);
 });
 

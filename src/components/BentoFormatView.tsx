@@ -2,6 +2,7 @@ import React from 'react';
 import {
   clampPercentage,
   DashboardState,
+  FORMAT_META,
   FormatIndex,
   selectHeroPill,
   selectListRow,
@@ -30,6 +31,8 @@ export const BentoFormatView: React.FC<BentoFormatViewProps> = ({
   state,
   setState,
 }) => {
+  const meta = FORMAT_META[formatIndex];
+
   const sidebar = (
     <SidebarRail
       activeNav={state.activeSidebarNav}
@@ -49,6 +52,8 @@ export const BentoFormatView: React.FC<BentoFormatViewProps> = ({
 
   const hero = (
     <HeroPanel
+      titleLabel={meta.label}
+      tabLabels={meta.tabLabels}
       activePill={state.activeHeroPill}
       primaryActionActive={state.heroPrimaryActionActive}
       onSelectPill={(index) => setState((prev) => selectHeroPill(prev, index))}
@@ -126,11 +131,12 @@ export const BentoFormatView: React.FC<BentoFormatViewProps> = ({
   return (
     <div
       data-format-index={formatIndex}
-      className="styleguide-canvas flex h-full w-full flex-col gap-[12px] overflow-y-auto overflow-x-hidden p-[12px] md:flex-row md:overflow-hidden"
+      data-format-id={meta.id}
+      className={`${meta.themeClass} styleguide-canvas flex h-full w-full flex-col gap-[12px] overflow-y-auto overflow-x-hidden p-[12px] pb-[22px] md:flex-row md:overflow-hidden md:pb-[20px]`}
     >
       {sidebar}
 
-      {/* Format 1: Classic Reference Bento */}
+      {/* Format 1: Cours (Classic Reference Bento - Cobalt Blue) */}
       {formatIndex === 0 && (
         <div className="grid flex-1 grid-cols-1 gap-[12px] md:grid-cols-[2.15fr_1fr] md:grid-rows-[1.28fr_1fr]">
           {hero}
@@ -143,7 +149,7 @@ export const BentoFormatView: React.FC<BentoFormatViewProps> = ({
         </div>
       )}
 
-      {/* Format 2: Tall Left List + Asymmetric Studio Split */}
+      {/* Format 2: Exercice & Examen (Tall Left List + Asymmetric Studio Split - Emerald Green) */}
       {formatIndex === 1 && (
         <div className="grid flex-1 grid-cols-1 gap-[12px] md:grid-cols-[1fr_2.15fr] md:grid-rows-[1fr_1.28fr]">
           <div className="md:row-span-2">{list}</div>
@@ -158,13 +164,26 @@ export const BentoFormatView: React.FC<BentoFormatViewProps> = ({
         </div>
       )}
 
-      {/* Format 3: Panoramic Top Canvas + 3-Column Deck */}
+      {/* Format 3: Quiz, Flashcard, Résumé & Planification hebdomadaire (Panoramic Top + 3-Col Deck - Warm Amber) */}
       {formatIndex === 2 && (
         <div className="grid flex-1 grid-cols-1 gap-[12px] md:grid-cols-3 md:grid-rows-[1.15fr_1fr]">
           <div className="md:col-span-3">{hero}</div>
           {list}
           {moduleToggle}
           {transport}
+        </div>
+      )}
+
+      {/* Format 4: Préparation Examen (Top 3-Card Control Row + Bottom Split - Crimson Ruby) */}
+      {formatIndex === 3 && (
+        <div className="grid flex-1 grid-cols-1 gap-[12px] md:grid-cols-[2.15fr_1fr] md:grid-rows-[1fr_1.28fr]">
+          <div className="grid grid-cols-1 gap-[12px] sm:grid-cols-3 md:col-span-2">
+            {timeline}
+            {moduleToggle}
+            {transport}
+          </div>
+          {hero}
+          {list}
         </div>
       )}
     </div>

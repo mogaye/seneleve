@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BentoFormatView } from './components/BentoFormatView';
 import {
   createInitialDashboardState,
+  FORMAT_META,
   FormatIndex,
   resolveSwipeDirection,
   setFormat,
@@ -221,6 +222,8 @@ export default function App() {
       ? stepFormat(state.activeFormat, dragOffsetX > 0 ? 1 : -1)
       : null;
 
+  const activeThemeClass = FORMAT_META[state.activeFormat].themeClass;
+
   return (
     <main
       ref={containerRef}
@@ -230,7 +233,7 @@ export default function App() {
       onPointerUp={finishDrag}
       onPointerCancel={finishDrag}
       onWheel={handleWheel}
-      className="styleguide-canvas relative h-screen w-screen touch-pan-y select-none overflow-hidden"
+      className={`${activeThemeClass} styleguide-canvas relative h-screen w-screen touch-pan-y select-none overflow-hidden`}
     >
       {/* Active or Transitioning Format Layers */}
       {transition ? (
@@ -313,29 +316,29 @@ export default function App() {
         </>
       )}
 
-      {/* Subtle bottom format pager dots */}
+      {/* Subtle bottom 4-format indicator */}
       <nav
         aria-label="Formats"
-        className="fixed bottom-[3px] left-1/2 z-30 flex -translate-x-1/2 items-center gap-1.5"
+        className="fixed bottom-[5px] left-1/2 z-30 flex -translate-x-1/2 items-center gap-2"
       >
-        {([0, 1, 2] as FormatIndex[]).map((idx) => {
-          const isActive = state.activeFormat === idx;
+        {FORMAT_META.map((meta) => {
+          const isActive = state.activeFormat === meta.index;
           return (
             <button
-              key={idx}
+              key={meta.id}
               type="button"
-              aria-label={`Format ${idx + 1}`}
+              aria-label={`Format ${meta.index + 1} : ${meta.shortLabel}`}
               aria-current={isActive ? 'page' : undefined}
               onClick={() => {
-                if (idx === state.activeFormat || transition) return;
+                if (meta.index === state.activeFormat || transition) return;
                 const dir =
-                  idx === stepFormat(state.activeFormat, 1) ? 'right' : 'left';
-                triggerSlideTo(idx, dir, 0);
+                  meta.index === stepFormat(state.activeFormat, 1) ? 'right' : 'left';
+                triggerSlideTo(meta.index, dir, 0);
               }}
-              className={`sg-focus-ring h-[5px] rounded-full transition-all duration-200 ${
+              className={`${meta.themeClass} sg-focus-ring h-[5px] rounded-full transition-all duration-200 ${
                 isActive
-                  ? 'w-[22px] bg-[#0E4FD6] shadow-[0_0_10px_rgba(37,99,235,0.65)]'
-                  : 'w-[6px] bg-[#B4B5B3] hover:bg-[#5B8DEF]'
+                  ? 'sg-accent-bar w-[26px]'
+                  : 'w-[8px] bg-[#B4B5B3] hover:opacity-80'
               }`}
             />
           );
