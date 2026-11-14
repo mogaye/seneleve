@@ -1,52 +1,66 @@
 import React from 'react';
+import {
+  BookOpen,
+  ClipboardCheck,
+  GraduationCap,
+  Layers,
+  Sparkles,
+} from 'lucide-react';
+import { FORMAT_META, FormatIndex } from '../utils/wireframeState';
 
 interface SidebarRailProps {
-  activeNav: number;
+  activeFormat: FormatIndex;
   activeUtility: number | null;
   sidebarExpanded: boolean;
   profileActive: boolean;
-  onSelectNav: (index: number) => void;
+  onSelectFormat: (index: FormatIndex) => void;
   onToggleUtility: (index: number) => void;
   onToggleExpand: () => void;
   onToggleProfile: () => void;
 }
 
+const SCREEN_ICONS = [BookOpen, ClipboardCheck, Layers, GraduationCap] as const;
+
 export const SidebarRail: React.FC<SidebarRailProps> = ({
-  activeNav,
+  activeFormat,
   activeUtility,
   sidebarExpanded,
   profileActive,
-  onSelectNav,
+  onSelectFormat,
   onToggleUtility,
   onToggleExpand,
   onToggleProfile,
 }) => {
   return (
     <nav
-      aria-label="Primary navigation"
-      className="sg-card-l1 relative flex w-full flex-row items-center justify-between rounded-[18px] px-3 py-2.5 md:h-full md:w-[58px] md:shrink-0 md:flex-col md:justify-start md:px-0 md:py-3.5"
+      aria-label="Navigation principale"
+      className={`sg-glass-bar relative flex w-full flex-row items-center justify-between rounded-full px-3 py-2 md:h-full md:shrink-0 md:flex-col md:justify-start md:px-2 md:py-3.5 transition-[width] duration-200 ${
+        sidebarExpanded ? 'md:w-[152px]' : 'md:w-[60px]'
+      }`}
     >
-      {/* Top profile circle + edge handle */}
+      {/* Top indicator + edge handle */}
       <div className="relative flex items-center justify-center md:w-full">
         <button
           type="button"
           onClick={onToggleProfile}
-          aria-label="Workspace profile"
+          aria-label="Profil élève"
           aria-pressed={profileActive}
-          className={`sg-focus-ring h-[22px] w-[22px] rounded-full transition-all duration-150 active:scale-95 ${
+          className={`sg-focus-ring flex h-[30px] w-[30px] items-center justify-center rounded-full text-[11px] font-bold transition-[transform,box-shadow] duration-150 active:scale-95 ${
             profileActive
-              ? 'sg-nav-active'
-              : 'bg-[#141414] hover:opacity-85'
+              ? 'sg-nav-active text-white'
+              : 'bg-white/85 text-[#121417] shadow-xs hover:bg-white'
           }`}
-        />
+        >
+          É
+        </button>
 
-        {/* Small right-edge notch indicator */}
+        {/* Right-edge expand toggle */}
         <button
           type="button"
           onClick={onToggleExpand}
-          aria-label="Toggle rail indicator"
-          aria-pressed={sidebarExpanded}
-          className={`sg-focus-ring hidden md:block absolute -right-[4px] top-1/2 -translate-y-1/2 h-[9px] w-[9px] rounded-[2.5px] border-[1.5px] border-white transition-colors duration-150 ${
+          aria-label={sidebarExpanded ? 'Réduire la barre latérale' : 'Déplier la barre latérale'}
+          aria-expanded={sidebarExpanded}
+          className={`sg-focus-ring hidden md:block absolute -right-[11px] top-1/2 -translate-y-1/2 h-[10px] w-[10px] rounded-full border-[1.5px] border-white transition-colors duration-150 ${
             sidebarExpanded ? 'sg-accent-bar' : 'bg-[#66686C]'
           }`}
         />
@@ -55,24 +69,39 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({
       {/* Divider 1 */}
       <div
         aria-hidden="true"
-        className="hidden h-[1.5px] w-[26px] rounded-full bg-[#CECECA] md:my-2.5 md:block"
+        className="hidden h-[1.5px] w-full max-w-[28px] rounded-full bg-white/70 md:my-2.5 md:block"
       />
 
-      {/* 5 main square navigation items */}
-      <div className="flex flex-row items-center gap-[7px] md:flex-col md:gap-[8px]">
-        {[0, 1, 2, 3, 4].map((index) => {
-          const isActive = activeNav === index;
+      {/* 4 main page buttons matching the 4 screens */}
+      <div className="flex flex-row items-center gap-[8px] md:w-full md:flex-col md:gap-[8px]">
+        {FORMAT_META.map((meta) => {
+          const Icon = SCREEN_ICONS[meta.index];
+          const isActive = activeFormat === meta.index;
           return (
             <button
-              key={index}
+              key={meta.id}
               type="button"
-              onClick={() => onSelectNav(index)}
-              aria-label={`Navigation item ${index + 1}`}
-              aria-pressed={isActive}
-              className={`sg-focus-ring h-[22px] w-[22px] rounded-[5px] transition-all duration-150 active:scale-95 ${
-                isActive ? 'sg-nav-active' : 'sg-nav-idle'
+              onClick={() => onSelectFormat(meta.index)}
+              aria-label={meta.sidebarLabel}
+              aria-current={isActive ? 'page' : undefined}
+              title={meta.sidebarLabel}
+              className={`sg-focus-ring flex items-center justify-center rounded-full transition-[transform,box-shadow] duration-150 active:scale-95 ${
+                sidebarExpanded
+                  ? 'h-[36px] w-full justify-start gap-2.5 px-3'
+                  : 'h-[36px] w-[36px]'
+              } ${
+                isActive
+                  ? 'sg-nav-active text-white'
+                  : 'sg-nav-idle text-[#30343B]'
               }`}
-            />
+            >
+              <Icon className="h-[15px] w-[15px] shrink-0" strokeWidth={2} />
+              {sidebarExpanded && (
+                <span className="truncate text-[11.5px] font-semibold whitespace-nowrap">
+                  {meta.sidebarLabel}
+                </span>
+              )}
+            </button>
           );
         })}
       </div>
@@ -80,35 +109,42 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({
       {/* Divider 2 */}
       <div
         aria-hidden="true"
-        className="hidden h-[1.5px] w-[26px] rounded-full bg-[#CECECA] md:my-2.5 md:block"
+        className="hidden h-[1.5px] w-full max-w-[28px] rounded-full bg-white/70 md:my-2.5 md:block"
       />
 
-      {/* 2 utility squares */}
-      <div className="hidden flex-row items-center gap-[7px] sm:flex md:flex-col md:gap-[8px]">
-        {[0, 1].map((index) => {
-          const isActive = activeUtility === index;
-          return (
-            <button
-              key={index}
-              type="button"
-              onClick={() => onToggleUtility(index)}
-              aria-label={`Utility tool ${index + 1}`}
-              aria-pressed={isActive}
-              className={`sg-focus-ring h-[22px] w-[22px] rounded-[5px] transition-all duration-150 active:scale-95 ${
-                isActive ? 'sg-nav-active' : 'sg-nav-idle'
-              }`}
-            />
-          );
-        })}
+      {/* Utility button */}
+      <div className="hidden flex-row items-center gap-[8px] sm:flex md:w-full md:flex-col">
+        <button
+          type="button"
+          onClick={() => onToggleUtility(0)}
+          aria-label="Mode concentration"
+          aria-pressed={activeUtility === 0}
+          title="Mode concentration"
+          className={`sg-focus-ring flex items-center justify-center rounded-full transition-[transform,box-shadow] duration-150 active:scale-95 ${
+            sidebarExpanded ? 'h-[34px] w-full justify-start gap-2.5 px-3' : 'h-[34px] w-[34px]'
+          } ${
+            activeUtility === 0
+              ? 'sg-nav-active text-white'
+              : 'sg-nav-idle text-[#4B4E54]'
+          }`}
+        >
+          <Sparkles className="h-[14px] w-[14px] shrink-0" strokeWidth={2} />
+          {sidebarExpanded && (
+            <span className="truncate text-[11.5px] font-medium whitespace-nowrap">
+              Focus
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Bottom circle */}
       <div className="md:mt-auto">
         <button
           type="button"
-          onClick={() => onToggleUtility(activeUtility === 0 ? 1 : 0)}
-          aria-label="Account preferences"
-          className="sg-focus-ring h-[22px] w-[22px] rounded-full border border-[#9E9F9B] bg-[#66686C] transition-all duration-150 hover:bg-[#141414] active:scale-95"
+          onClick={() => onSelectFormat(0)}
+          aria-label="Revenir à l’accueil Cours"
+          title="Accueil Cours"
+          className="sg-focus-ring h-[26px] w-[26px] rounded-full border border-white/80 bg-[#5C6068]/75 transition-colors duration-150 hover:bg-[#141414] active:scale-95"
         />
       </div>
     </nav>

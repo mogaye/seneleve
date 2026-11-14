@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { BentoFormatView } from './components/BentoFormatView';
+import { getClassMeta } from './data/studyData';
 import {
   createInitialDashboardState,
   FORMAT_META,
@@ -19,6 +21,9 @@ interface SlideTransition {
 
 export default function App() {
   const [state, setState] = useState(createInitialDashboardState);
+  const [exerciseSubjectPrefill, setExerciseSubjectPrefill] = useState<string | undefined>(
+    undefined,
+  );
   const [dragOffsetX, setDragOffsetX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [transition, setTransition] = useState<SlideTransition | null>(null);
@@ -41,17 +46,6 @@ export default function App() {
     lockedHorizontal: false,
     aborted: false,
   });
-
-  useEffect(() => {
-    if (!state.isPlaying) return;
-    const timer = window.setInterval(() => {
-      setState((prev) => ({
-        ...prev,
-        mediaProgress: prev.mediaProgress >= 100 ? 0 : prev.mediaProgress + 2,
-      }));
-    }, 350);
-    return () => window.clearInterval(timer);
-  }, [state.isPlaying]);
 
   useEffect(() => {
     return () => {
@@ -98,11 +92,31 @@ export default function App() {
     [state.activeFormat],
   );
 
-  // Keyboard navigation (ArrowRight pushes to next format, ArrowLeft to previous)
+  const navigateToFormat = useCallback(
+    (target: FormatIndex) => {
+      if (target === state.activeFormat || transition) return;
+      const dir =
+        target === stepFormat(state.activeFormat, 1) || target > state.activeFormat
+          ? 'right'
+          : 'left';
+      triggerSlideTo(target, dir, 0);
+    },
+    [state.activeFormat, transition, triggerSlideTo],
+  );
+
+  // Keyboard navigation (ArrowRight pushes to next screen, ArrowLeft to previous)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target?.getAttribute('role') === 'slider') return;
+      const tag = target?.tagName;
+      if (
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'SELECT' ||
+        target?.getAttribute('role') === 'slider'
+      ) {
+        return;
+      }
       if (transition) return;
 
       if (event.key === 'ArrowRight') {
@@ -122,7 +136,9 @@ export default function App() {
     if (transition) return;
     if (event.button !== 0 && event.pointerType === 'mouse') return;
     const target = event.target as HTMLElement | null;
-    if (target?.closest('[role="slider"]')) return;
+    if (target?.closest('input, select, textarea, button, a, label, [role="slider"]')) {
+      return;
+    }
 
     dragRef.current = {
       pointerId: event.pointerId,
@@ -223,22 +239,23 @@ export default function App() {
       : null;
 
   const activeThemeClass = FORMAT_META[state.activeFormat].themeClass;
+  const activeCycleClass = getClassMeta(state.selectedClass).cycleClass;
 
   return (
     <main
       ref={containerRef}
       data-active-format={state.activeFormat}
+      data-active-class={state.selectedClass}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={finishDrag}
       onPointerCancel={finishDrag}
       onWheel={handleWheel}
-      className={`${activeThemeClass} styleguide-canvas relative h-screen w-screen touch-pan-y select-none overflow-hidden`}
+      className={`${activeThemeClass} ${activeCycleClass} styleguide-canvas relative h-screen w-screen touch-pan-y overflow-hidden`}
     >
-      {/* Active or Transitioning Format Layers */}
+      {/* Active or Transitioning Screen Layers */}
       {transition ? (
         <>
-          {/* Outgoing format sliding off-screen */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0"
@@ -255,10 +272,12 @@ export default function App() {
               formatIndex={transition.from}
               state={state}
               setState={setState}
+              onNavigateTo={navigateToFormat}
+              exerciseSubjectPrefill={exerciseSubjectPrefill}
+              onPrefillExerciseSubject={(subject) => setExerciseSubjectPrefill(subject)}
             />
           </div>
 
-          {/* Incoming format sliding into place */}
           <div
             className="absolute inset-0"
             style={{
@@ -274,12 +293,14 @@ export default function App() {
               formatIndex={transition.to}
               state={state}
               setState={setState}
+              onNavigateTo={navigateToFormat}
+              exerciseSubjectPrefill={exerciseSubjectPrefill}
+              onPrefillExerciseSubject={(subject) => setExerciseSubjectPrefill(subject)}
             />
           </div>
         </>
       ) : (
         <>
-          {/* Incoming peek layer during live horizontal drag */}
           {peekFormat !== null && (
             <div
               aria-hidden="true"
@@ -293,11 +314,13 @@ export default function App() {
                 formatIndex={peekFormat}
                 state={state}
                 setState={setState}
+                onNavigateTo={navigateToFormat}
+                exerciseSubjectPrefill={exerciseSubjectPrefill}
+                onPrefillExerciseSubject={(subject) => setExerciseSubjectPrefill(subject)}
               />
             </div>
           )}
 
-          {/* Current active format */}
           <div
             className="absolute inset-0"
             style={{
@@ -311,15 +334,18 @@ export default function App() {
               formatIndex={state.activeFormat}
               state={state}
               setState={setState}
+              onNavigateTo={navigateToFormat}
+              exerciseSubjectPrefill={exerciseSubjectPrefill}
+              onPrefillExerciseSubject={(subject) => setExerciseSubjectPrefill(subject)}
             />
           </div>
         </>
       )}
 
-      {/* Subtle bottom 4-format indicator */}
+      {/* VisionOS-style Bottom Floating Frosted Glass Screen Bar */}
       <nav
-        aria-label="Formats"
-        className="fixed bottom-[5px] left-1/2 z-30 flex -translate-x-1/2 items-center gap-2"
+        aria-label="Écrans"
+        className="sg-glass-bar fixed bottom-[10px] left-1/2 z-30 flex max-w-[calc(100vw-20px)] -translate-x-1/2 items-center gap-1 overflow-x-auto rounded-full p-1"
       >
         {FORMAT_META.map((meta) => {
           const isActive = state.activeFormat === meta.index;
@@ -327,22 +353,32 @@ export default function App() {
             <button
               key={meta.id}
               type="button"
-              aria-label={`Format ${meta.index + 1} : ${meta.shortLabel}`}
+              aria-label={`Écran ${meta.index + 1} : ${meta.bottomLabel}`}
               aria-current={isActive ? 'page' : undefined}
-              onClick={() => {
-                if (meta.index === state.activeFormat || transition) return;
-                const dir =
-                  meta.index === stepFormat(state.activeFormat, 1) ? 'right' : 'left';
-                triggerSlideTo(meta.index, dir, 0);
-              }}
-              className={`${meta.themeClass} sg-focus-ring h-[5px] rounded-full transition-all duration-200 ${
+              onClick={() => navigateToFormat(meta.index)}
+              className={`${meta.themeClass} sg-focus-ring h-[30px] rounded-full px-3 text-[11.5px] font-semibold whitespace-nowrap shrink-0 transition-[transform,box-shadow] duration-150 ${
                 isActive
-                  ? 'sg-accent-bar w-[26px]'
-                  : 'w-[8px] bg-[#B4B5B3] hover:opacity-80'
+                  ? 'sg-btn-primary text-white'
+                  : 'text-[#36393F] hover:bg-white/60 hover:text-[#121417]'
               }`}
-            />
+            >
+              <span className="md:hidden">{meta.sidebarLabel}</span>
+              <span className="hidden md:inline">{meta.bottomLabel}</span>
+            </button>
           );
         })}
+
+        <button
+          type="button"
+          onClick={() =>
+            triggerSlideTo(stepFormat(state.activeFormat, 1), 'right', 0)
+          }
+          aria-label="Écran suivant"
+          title="Écran suivant"
+          className="sg-focus-ring flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-white/75 text-[#121417] shadow-xs transition-colors hover:bg-white"
+        >
+          <Plus className="h-[14px] w-[14px]" strokeWidth={2.2} />
+        </button>
       </nav>
     </main>
   );

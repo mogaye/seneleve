@@ -1,42 +1,52 @@
+import { CLASS_LEVELS_FULL, ClassLevel, getDefaultSerieForClass, SerieOption } from '../data/studyData';
+
 export type FormatIndex = 0 | 1 | 2 | 3;
 
 export interface FormatMeta {
   index: FormatIndex;
   id: 'cours' | 'exercice' | 'revision' | 'examen';
-  label: string;
-  shortLabel: string;
+  sidebarLabel: string;
+  bottomLabel: string;
+  badge: string;
+  title: string;
   themeClass: string;
-  tabLabels?: readonly [string, string, string, string];
 }
 
 export const FORMAT_META: readonly FormatMeta[] = [
   {
     index: 0,
     id: 'cours',
-    label: 'Cours',
-    shortLabel: 'Cours',
+    sidebarLabel: 'Cours',
+    bottomLabel: 'Cours',
+    badge: 'COURS',
+    title: 'Apprends chaque leçon pas à pas',
     themeClass: 'theme-cours',
   },
   {
     index: 1,
     id: 'exercice',
-    label: 'Exercice & Examen',
-    shortLabel: 'Exercice & Examen',
+    sidebarLabel: 'Entraînement',
+    bottomLabel: 'Exercices & Examens',
+    badge: 'EXERCICES & EXAMENS',
+    title: 'À toi de t’entraîner !',
     themeClass: 'theme-exercice',
   },
   {
     index: 2,
     id: 'revision',
-    label: 'Quiz · Flashcard · Résumé · Planification',
-    shortLabel: 'Quiz · Flashcard · Résumé · Planning',
+    sidebarLabel: 'Révisions',
+    bottomLabel: 'Révisions',
+    badge: 'RÉVISER',
+    title: 'Révise à ta façon',
     themeClass: 'theme-revision',
-    tabLabels: ['Quiz', 'Flashcard', 'Résumé', 'Planning'],
   },
   {
     index: 3,
     id: 'examen',
-    label: 'Préparation Examen',
-    shortLabel: 'Préparation Examen',
+    sidebarLabel: 'Examens',
+    bottomLabel: 'Préparation Examen',
+    badge: 'PRÉPARATION EXAMEN',
+    title: 'Prépare ton examen avec méthode',
     themeClass: 'theme-examen',
   },
 ] as const;
@@ -45,37 +55,21 @@ export const TOTAL_FORMATS = FORMAT_META.length;
 
 export interface DashboardState {
   activeFormat: FormatIndex;
-  activeSidebarNav: number;
   activeUtilityNav: number | null;
   sidebarExpanded: boolean;
   profileActive: boolean;
-  activeHeroPill: number;
-  heroPrimaryActionActive: boolean;
-  listFilterActive: boolean;
-  activeListRow: number;
-  timelineProgress: number;
-  moduleSwitchOn: boolean;
-  transportSwitchOn: boolean;
-  isPlaying: boolean;
-  mediaProgress: number;
+  selectedClass: ClassLevel;
+  selectedSerie: SerieOption | null;
 }
 
 export function createInitialDashboardState(): DashboardState {
   return {
     activeFormat: 0,
-    activeSidebarNav: 0,
     activeUtilityNav: null,
     sidebarExpanded: false,
     profileActive: false,
-    activeHeroPill: 0,
-    heroPrimaryActionActive: false,
-    listFilterActive: false,
-    activeListRow: 2, // 0-indexed: Row 3 is active pill in the reference model
-    timelineProgress: 64,
-    moduleSwitchOn: true,
-    transportSwitchOn: true,
-    isPlaying: false,
-    mediaProgress: 48,
+    selectedClass: 'CI',
+    selectedSerie: getDefaultSerieForClass('CI'),
   };
 }
 
@@ -92,10 +86,25 @@ export function setFormat(state: DashboardState, index: number): DashboardState 
   };
 }
 
+export function stepClassLevel(current: ClassLevel, delta: 1 | -1): ClassLevel {
+  const idx = CLASS_LEVELS_FULL.indexOf(current);
+  const safeIdx = idx === -1 ? 0 : idx;
+  const nextIdx = (safeIdx + delta + CLASS_LEVELS_FULL.length) % CLASS_LEVELS_FULL.length;
+  return CLASS_LEVELS_FULL[nextIdx];
+}
+
+export function setActiveClass(state: DashboardState, nextClass: ClassLevel): DashboardState {
+  return {
+    ...state,
+    selectedClass: nextClass,
+    selectedSerie: getDefaultSerieForClass(nextClass),
+  };
+}
+
 export function resolveSwipeDirection(dx: number, containerWidth: number): -1 | 0 | 1 {
   const threshold = Math.max(56, Math.round(containerWidth * 0.12));
-  if (dx >= threshold) return 1; // Push right -> advance to next format
-  if (dx <= -threshold) return -1; // Push left -> move to previous format
+  if (dx >= threshold) return 1;
+  if (dx <= -threshold) return -1;
   return 0;
 }
 
@@ -104,16 +113,32 @@ export function clampPercentage(value: number, min = 0, max = 100): number {
   return Math.min(max, Math.max(min, Math.round(value)));
 }
 
-export function stepProgress(current: number, delta: number, min = 0, max = 100): number {
-  return clampPercentage(current + delta, min, max);
+export function computePreparationPercent(
+  statuses: readonly ('À commencer' | 'En cours' | 'Révisée')[],
+): number {
+  if (statuses.length === 0) return 0;
+  const totalPoints = statuses.reduce((sum, status) => {
+    if (status === 'Révisée') return sum + 100;
+    if (status === 'En cours') return sum + 50;
+    return sum;
+  }, 0);
+  return clampPercentage(totalPoints / statuses.length);
 }
 
-export function selectSidebarNav(state: DashboardState, index: number): DashboardState {
-  const safeIndex = Math.max(0, Math.min(4, index));
-  return {
-    ...state,
-    activeSidebarNav: safeIndex,
-  };
+export function computeDaysRemaining(
+  examDateIso: string,
+  referenceDate: Date = new Date(),
+): number | null {
+  if (!examDateIso) return null;
+  const target = new Date(`${examDateIso}T00:00:00`);
+  if (Number.isNaN(target.getTime())) return null;
+  const todayMidnight = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+  );
+  const diffMs = target.getTime() - todayMidnight.getTime();
+  return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 }
 
 export function toggleUtilityNav(state: DashboardState, index: number): DashboardState {
@@ -121,42 +146,5 @@ export function toggleUtilityNav(state: DashboardState, index: number): Dashboar
   return {
     ...state,
     activeUtilityNav: state.activeUtilityNav === safeIndex ? null : safeIndex,
-  };
-}
-
-export function selectHeroPill(state: DashboardState, index: number): DashboardState {
-  const safeIndex = Math.max(0, Math.min(3, index));
-  return {
-    ...state,
-    activeHeroPill: safeIndex,
-  };
-}
-
-export function selectListRow(state: DashboardState, index: number): DashboardState {
-  const safeIndex = Math.max(0, Math.min(3, index));
-  return {
-    ...state,
-    activeListRow: safeIndex,
-  };
-}
-
-export function toggleModuleSwitch(state: DashboardState): DashboardState {
-  return {
-    ...state,
-    moduleSwitchOn: !state.moduleSwitchOn,
-  };
-}
-
-export function toggleTransportSwitch(state: DashboardState): DashboardState {
-  return {
-    ...state,
-    transportSwitchOn: !state.transportSwitchOn,
-  };
-}
-
-export function togglePlayback(state: DashboardState): DashboardState {
-  return {
-    ...state,
-    isPlaying: !state.isPlaying,
   };
 }
